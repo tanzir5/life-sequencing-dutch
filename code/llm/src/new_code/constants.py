@@ -1,0 +1,14 @@
+PRIMARY_KEY = 'PRIMARY_KEY'
+#MUNICIPALIY = 'municipality'
+GENDER = 'gender'
+BIRTH_MONTH = 'month'
+BIRTH_YEAR = 'year'
+DAYS_SINCE_FIRST = 'daysSinceFirstEvent'
+AGE = 'age'
+ORIGIN = 'municipality'
+TIME_COLUMNS = [AGE, DAYS_SINCE_FIRST]
+IGNORE_COLUMNS = ['educDet', 'incomeYearly', 'inc'] 
+DELIMITER = ','
+MISSING = 'MISSING'
+FIRST_EVENT_TIME = "FIRST_EVENT_TIME"
+INF = 1e9

@@ -8,7 +8,6 @@ import time
 def bfs_old(person, num_steps, adjacency_dict):
     # find friends within num_steps of distance from person
     # Do not expand more than 2 nodes at each level
-    # But include all neighbors of the current level in your solution.
     seen = set()
     
     ret_list = []

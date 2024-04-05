@@ -40,7 +40,7 @@ def bfs_fixed(person, num_steps, adjacency_dict):
   ret_list = []
   sources_current = [person]
   visited.add(person)
-  for i in range(num_steps):
+  for i in range(num_steps+1):
     if len(sources_current) > 2:
       sources_current = random.sample(sources_current, 2)
     sources_next = []

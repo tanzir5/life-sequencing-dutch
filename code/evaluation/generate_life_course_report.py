@@ -234,7 +234,7 @@ if __name__ == '__main__':
             
             result_dict, test_counts_by_year = report_utils.linear_variable_prediction(embedding_dict, income_by_year, list(income_by_year.keys()), dtype='single')
             
-            result_with_baseline, test_counts_with_baseline, only_baseline = report_utils.variable_prediction(embedding_dict, income_by_year, list(income_by_year.keys()), dtype='single', baseline=income_baseline_dict)
+            result_with_baseline, test_counts_with_baseline, only_baseline = report_utils.linear_variable_prediction(embedding_dict, income_by_year, list(income_by_year.keys()), dtype='single', baseline=income_baseline_dict)
             
             if result_with_baseline is not None:
             
@@ -273,7 +273,7 @@ if __name__ == '__main__':
             
             result_dict, test_counts_by_year = report_utils.linear_variable_prediction(embedding_dict, marriages_by_year, list(marriages_by_year.keys()), dtype='pair')
             
-            result_with_baseline, test_counts_with_baseline, only_baseline = report_utils.variable_prediction(embedding_dict, marriages_by_year, list(marriages_by_year.keys()), dtype='pair', baseline=income_baseline_dict)
+            result_with_baseline, test_counts_with_baseline, only_baseline = report_utils.linear_variable_prediction(embedding_dict, marriages_by_year, list(marriages_by_year.keys()), dtype='pair', baseline=income_baseline_dict)
             if result_with_baseline is not None:
             
                 marriage_results['Baseline'] = only_baseline

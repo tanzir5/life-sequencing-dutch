@@ -65,7 +65,7 @@ if __name__ == '__main__':
     baseline_dict = {}
 
     # 4. Income in 2011
-    with open("/gpfs/ostor/ossc9424/homedir/Life_Course_Evaluation/data/processed/income_baseline_2011.pkl", 'rb') as pkl_file:
+    with open("/gpfs/ostor/ossc9424/homedir/Life_Course_Evaluation/data/processed/2011_income_baseline.pkl", 'rb') as pkl_file:
         person_income_2011 = dict(pickle.load(pkl_file))  
     
     for person in person_birth_year:

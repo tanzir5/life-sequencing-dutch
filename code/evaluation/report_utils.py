@@ -658,7 +658,7 @@ def linear_variable_prediction(embedding_dict, variable_dict, years, dtype="sing
                 
         if dtype == 'pair':
 
-            model = LogisticRegression()
+            model = LogisticRegression(max_iter=10000)
 
             for pair in variable_dict[year]:
                 person = pair[0]
@@ -708,7 +708,7 @@ def linear_variable_prediction(embedding_dict, variable_dict, years, dtype="sing
         if dtype == 'single':
             baseline_model = LinearRegression()
         elif dtype == 'pair':
-            baseline_model = LogisticRegression()
+            baseline_model = LogisticRegression(max_iter=10000)
             
         scores = cross_val_score(baseline_model, full_baseline_list, full_label_list, cv=5)
         baseline_overall = scores.mean()
@@ -779,7 +779,7 @@ def linear_variable_prediction(embedding_dict, variable_dict, years, dtype="sing
             model = LinearRegression()
             model.fit(full_embedding_list, full_label_list)
         elif dtype == 'pair':
-            model = LogisticRegression()
+            model = LogisticRegression(max_iter=10000)
             model.fit(full_embedding_list, full_label_list)
         
         if baseline is not None:
@@ -788,7 +788,7 @@ def linear_variable_prediction(embedding_dict, variable_dict, years, dtype="sing
                 baseline_model = LinearRegression()
                 baseline_model.fit(full_baseline_list, full_label_list)
             if dtype == 'pair':
-                baseline_model = LogisticRegression()
+                baseline_model = LogisticRegression(max_iter=10000)
                 baseline_model.fit(full_baseline_list, full_label_list)
         
         for year in years:

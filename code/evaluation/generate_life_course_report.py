@@ -48,7 +48,7 @@ if __name__ == '__main__':
     with open(load_url, 'rb') as pkl_file:
         embedding_sets = list(pickle.load(pkl_file))
 
-    # Load the naive baseline in 3 parts
+    # Load the naive baseline in 4 parts
     # 1. Birth Year (Age)
     with open("/gpfs/ostor/ossc9424/homedir/Life_Course_Evaluation/data/processed/person_birth_year.pkl", 'rb') as pkl_file:
         person_birth_year = dict(pickle.load(pkl_file))
@@ -234,7 +234,7 @@ if __name__ == '__main__':
             
             result_dict, test_counts_by_year = report_utils.linear_variable_prediction(embedding_dict, income_by_year, list(income_by_year.keys()), dtype='single')
             
-            result_with_baseline, test_counts_with_baseline, only_baseline = report_utils.linear_baseline_prediction(embedding_dict, income_by_year, list(income_by_year.keys()), income_baseline_dict, dtype='single')
+            result_with_baseline, test_counts_with_baseline, only_baseline = report_utils.variable_prediction(embedding_dict, income_by_year, list(income_by_year.keys()), dtype='single', baseline=income_baseline_dict)
             
             if result_with_baseline is not None:
             
@@ -273,7 +273,7 @@ if __name__ == '__main__':
             
             result_dict, test_counts_by_year = report_utils.linear_variable_prediction(embedding_dict, marriages_by_year, list(marriages_by_year.keys()), dtype='pair')
             
-            result_with_baseline, test_counts_with_baseline, only_baseline = report_utils.linear_baseline_prediction(embedding_dict, marriages_by_year, list(marriages_by_year.keys()), income_baseline_dict, dtype='pair')
+            result_with_baseline, test_counts_with_baseline, only_baseline = report_utils.variable_prediction(embedding_dict, marriages_by_year, list(marriages_by_year.keys()), dtype='pair', baseline=income_baseline_dict)
             if result_with_baseline is not None:
             
                 marriage_results['Baseline'] = only_baseline
@@ -313,9 +313,8 @@ if __name__ == '__main__':
             section_start = time.time()
             
             result_dict, test_counts_by_year = report_utils.linear_variable_prediction(embedding_dict, partnerships_by_year, list(partnerships_by_year.keys()), dtype='pair')
-            
-            
-            result_with_baseline, test_counts_with_baseline, only_baseline = report_utils.linear_baseline_prediction(embedding_dict, partnerships_by_year, list(partnerships_by_year.keys()), baseline_dict, dtype='pair')
+            result_with_baseline, test_counts_with_baseline, only_baseline = report_utils.linear_variable_prediction(embedding_dict, partnerships_by_year, list(partnerships_by_year.keys()), dtype='pair', baseline=baseline_dict)
+
             if result_with_baseline is not None:
             
                 partnership_results['Baseline'] = only_baseline

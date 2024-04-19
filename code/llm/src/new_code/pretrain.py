@@ -14,33 +14,6 @@ from src.new_code.load_data import CustomDataset
 from src.new_code.utils import read_json, print_now
 import os
 
-
-# HOME_PATH = str(Path.home())
-
-# log = logging.getLogger(__name__)
-
-
-
-
-
-# def last_ckpt(dir_):
-#     ckpt_path = Path(HOME_PATH, dir_, "last.ckpt")
-#     if ckpt_path.exists():
-#         log.info("Checkpoint exists:\n\t%s" %str(ckpt_path))
-#         return str(ckpt_path)
-#     else:
-#         log.info("Checkpoint DOES NOT exists:\n\t%s" %str(ckpt_path))
-#         return None
-
-# def home_path():
-#     return HOME_PATH
-
-# try:
-#     OmegaConf.register_new_resolver("last_ckpt", last_ckpt)
-# except Exception as e:
-#     print_now(e)
-
-
 def is_float(string):
     try:
       float(string)
@@ -63,7 +36,10 @@ def read_hparams_from_file(file_path):
             key, value = line.strip().split(': ')
             value = value.replace('"','')
             if value in ['True', 'False']:
-              value = bool(value)
+              if value == 'True':
+                value = True
+              else:
+                value = False
             elif value.isdigit():
               value = int(value)
             elif is_float(value):
@@ -72,15 +48,15 @@ def read_hparams_from_file(file_path):
             #print(key, value)
         return hparams
 
-def get_callbacks(ckpoint_dir):
+def get_callbacks(ckpoint_dir, counter):
   if os.path.exists(ckpoint_dir) is False:
     os.mkdir(ckpoint_dir)
   callbacks = [
     ModelCheckpoint(
       dirpath=ckpoint_dir,#'projects/baseball/models/2010',
-      filename='model-{epoch:02d}',
+      filename=str(counter)+'model-{epoch:02d}',
       monitor='val_loss_combined',
-      save_top_k=2  
+      save_top_k=-1 
     )
   ]
   return callbacks
@@ -100,7 +76,7 @@ def get_train_val_dataloaders(dataset, batch_size, train_split=0.8, shuffle=True
 def pretrain(cfg):
   hparams_path = cfg['HPARAMS_PATH']#'src/new_code/regular_hparams.txt'
   ckpoint_dir = cfg['CHECKPOINT_DIR']
-  mlm_path = cfg['MLM_PATH']
+  mlm_dir = cfg['MLM_DIR']
   hparams = read_hparams_from_file(hparams_path)
   if 'RESUME_FROM_CHECKPOINT' in cfg:
     print_now(f"resuming training from checkpoint {cfg['RESUME_FROM_CHECKPOINT']}")
@@ -110,32 +86,45 @@ def pretrain(cfg):
     )
   else:
     model = TransformerEncoder(hparams)
-  callbacks = get_callbacks(ckpoint_dir)
-  trainer = Trainer(
-    callbacks=callbacks,
-    max_epochs=cfg['MAX_EPOCHS'],
-    accelerator='gpu',
-    devices=1
-  )
-
-  with open(mlm_path, 'rb') as file:
-    dataset = pickle.load(file)
-
-  # Define your batch size
-  batch_size = cfg['BATCH_SIZE']
   
-  # Create a data loader
-  train_dataloader, val_dataloader = get_train_val_dataloaders(
-    dataset=dataset,
-    batch_size=batch_size,
-    train_split=hparams['train_split']
-  )
-  #dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+  mlm_paths = []
+  for root, dirs, files in os.walk(mlm_dir):
+    for file_path in files:
+      mlm_paths.append(os.path.join(root, file_path))
 
-  print_now("training and validation dataloaders are created")
-  print_now(f"# of batches in training: {len(train_dataloader)}")
-  print_now(f"# of batches in validation: {len(val_dataloader)}")
-  trainer.fit(model, train_dataloader, val_dataloader)
+  val_dataloader = None
+  batch_size = cfg['BATCH_SIZE']
+  for epoch in range(cfg['MAX_EPOCHS']):
+    for counter, mlm_path in enumerate(mlm_paths):
+      if counter == 0:
+        if val_dataloader is None:
+          with open(mlm_path, 'rb') as f:
+            dataset = pickle.load(f)
+          val_dataloader = DataLoader(dataset, batch_size=batch_size)
+        continue
+      with open(mlm_path, 'rb') as f:
+        dataset = pickle.load(f)
+      callbacks = get_callbacks(ckpoint_dir, counter)
+      trainer = Trainer(
+        default_root_dir=ckpoint_dir,
+        callbacks=callbacks,
+        max_epochs=1,
+        accelerator='gpu',
+        devices=1
+      )
+      # Create a data loader
+      # train_dataloader, val_dataloader = get_train_val_dataloaders(
+      #   dataset=dataset,
+      #   batch_size=batch_size,
+      #   train_split=hparams['train_split']
+      # )
+      train_dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+
+      print_now("training and validation dataloaders are created")
+      print_now(f"# of batches in training: {len(train_dataloader)}")
+      print_now(f"# of batches in validation: {len(val_dataloader)}")
+      trainer.fit(model, train_dataloader)
+      trainer.validate(model, val_dataloader)
 
 if __name__ == "__main__":
   torch.set_float32_matmul_precision("medium")

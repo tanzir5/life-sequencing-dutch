@@ -1,10 +1,12 @@
+import sys
+
 from src.new_code.custom_vocab import CustomVocabulary
 from src.new_code.custom_vocab import DataFile
 from src.new_code.create_person_dict import CreatePersonDict
 from src.tasks.mlm import MLM
 from src.data_new.types import PersonDocument, Background
 from src.new_code.load_data import CustomDataset
-from src.new_code.utils import get_column_names, print_now, read_json
+from src.new_code.utils import get_column_names, print_now, read_json, shuffle_json
 from src.new_code.constants import DAYS_SINCE_FIRST, INF
 
 import os
@@ -14,8 +16,8 @@ import numpy as np
 import pickle 
 import fnmatch
 import csv
-import sys
 import time
+
 
 '''
   The pipeline is like the following: 
@@ -107,7 +109,7 @@ def write_chunk_and_init(
   original_sequence.clear()
   sequence_id.clear()
 
-def print_info(start_time, i, total):
+def print_info(start_time, i, total, sequence_id):
   elapsed_time = time.time() - start_time
   done_fraction = (i+1)/total
   print_now(f"time elapsed: {elapsed_time}, ETA: {elapsed_time/(done_fraction) - elapsed_time}")
@@ -116,6 +118,7 @@ def print_info(start_time, i, total):
   print_now(f"included: {len(sequence_id)}")
   print_now(f"included%: {len(sequence_id)/(i+1)*100}")
 
+
 def generate_encoded_data(
   custom_vocab,
   sequence_path,
@@ -123,6 +126,7 @@ def generate_encoded_data(
   time_range=None,
   do_mlm=True,
   needed_ids_path=None,
+  shuffle=False,
 ):
   # create mlmencoded documents
   if not os.path.exists(write_dir):
@@ -134,6 +138,11 @@ def generate_encoded_data(
     print_now(f'needed ids # = {len(needed_ids)}')
     random_id = list(needed_ids)[0]
     print_now(f'a random id is {random_id}, type is {type(random_id)}')
+
+  if shuffle:
+    new_seq_path = sequence_path[:-5] + "_shuffled.json"
+    shuffle_json(sequence_path, new_seq_path)
+    sequence_path = new_seq_path
 
   mlm = MLM('dutch_v0', 512)
   mlm.set_vocabulary(custom_vocab)
@@ -175,7 +184,7 @@ def generate_encoded_data(
         chunk_id += 1
 
       if do_print:
-        print_info(start_time, i, total) 
+        print_info(start_time, i, total, sequence_id) 
       
       # Parse each line as a JSON-encoded list
       try:
@@ -277,4 +286,5 @@ if __name__ == "__main__":
     needed_ids_path=(
       cfg['NEEDED_IDS_PATH'] if 'NEEDED_IDS_PATH' in cfg else None
     ),
+    shuffle=cfg['SHUFFLE'] if 'SHUFFLE' in cfg else False
   )

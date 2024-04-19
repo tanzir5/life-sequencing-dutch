@@ -7,5 +7,6 @@
   "primary_key": "RINPERSOON",
   "vocab_name": "dutch_vocab_2017_v0",
   "TIME_KEY": "daysSinceFirstEvent",
-  "TIME_RANGE_END": 16438
+  "TIME_RANGE_END": 16438,
+  "SHUFFLE": true
 }

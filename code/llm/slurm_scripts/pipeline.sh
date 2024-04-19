@@ -12,6 +12,6 @@
 echo "job started"
 
 date
-time python pipeline.py projects/dutch_real/pipeline_simple_cfg.json
+time python pipeline.py projects/dutch_real/pipeline_cfg.json
 
 echo "job ended successfully"

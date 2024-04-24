@@ -11,6 +11,6 @@
 echo "job started"
 
 date
-python src/new_code/preprocess.py projects/dutch_real/preprocess_cfg.json
+python src/new_code/preprocess_data.py projects/dutch_real/preprocess_cfg.json
 
 echo "job ended successfully"

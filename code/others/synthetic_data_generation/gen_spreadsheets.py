@@ -4,6 +4,7 @@ import sys
 import numpy as np
 import json
 from tqdm import tqdm
+import logging 
 
 def warning_message(df, column, path):
   print(f"Ignoring {column} from {path}")
@@ -67,10 +68,12 @@ def gen_meta_data(df, source_file_path):
   return metadata
 
 def process(source_file_path, target_file_path):
+  logging.debug("Starting with file %s.", source_file_path)
   df = pd.read_csv(source_file_path)
   summary_dict = {
     'metadata': gen_meta_data(df, source_file_path)
   }
+  logging.debug("Processing columns")
   for column in df.columns:
     if np.issubdtype(df[column].dtype, np.number):
       summary_dict.update(process_numeric_column(column, df[column]))
@@ -79,12 +82,13 @@ def process(source_file_path, target_file_path):
     else:
       warning_message(df, column, source_file_path)
 
+  logging.debug("Writing output")
   with open(target_file_path, 'w') as f:
     try:
       json.dump(summary_dict, f)
     except Exception as e:
-      print("An error occurred:", e)
-      print(f"{target_file_path} could not be jsonified")
+      logging.warning("An error occurred: %s", e)
+      logging.warning("%s could not be jsonified", target_file_path)
   
 def create_dir(path):
   pass
@@ -94,6 +98,12 @@ def create_dir(path):
 
 
 if __name__ == '__main__':
+
+  logging.basicConfig(
+    format='%(asctime)s %(name)s %(levelname)s %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+    level=logging.DEBUG)
+  
   root_dir = sys.argv[1]
   target_dir = sys.argv[2]
   for source_root, dirs, files in os.walk(root_dir):

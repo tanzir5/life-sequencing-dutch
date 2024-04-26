@@ -69,12 +69,13 @@ def gen_meta_data(df, source_file_path):
 
 def process(source_file_path, target_file_path):
   logging.debug("Starting with file %s.", source_file_path)
-  df = pd.read_csv(source_file_path)
+  df = pd.read_csv(source_file_path, sep=None, engine="python")
   summary_dict = {
     'metadata': gen_meta_data(df, source_file_path)
   }
   logging.debug("Processing columns")
   for column in df.columns:
+    logging.debug("current column: %s", column)
     if np.issubdtype(df[column].dtype, np.number):
       summary_dict.update(process_numeric_column(column, df[column]))
     elif df[column].dtype=='object':

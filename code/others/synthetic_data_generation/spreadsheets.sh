@@ -13,8 +13,7 @@ module purge
 module load 2022 
 module load Python/3.10.4-GCCcore-11.3.0
 module load SciPy-bundle/2022.05-foss-2022a
-module load matplotlib/3.5.2-foss-2022a
-source /gpfs/ostor/ossc9424/homedir/ossc_new/bin/activate 
+source /gpfs/ostor/ossc9424/homedir/ossc_env/bin/activate 
 
 DATAPATH="/gpfs/ostor/ossc9424/homedir/Tanzir/LifeToVec_Nov/projects/"
 

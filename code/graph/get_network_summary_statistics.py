@@ -8,19 +8,21 @@ import pickle
 # neighbor_edges = {}
 # education_edges = {}
 
-with open("'/gpfs/ostor/ossc9424/homedir/Dakota_Network/path_to_family_edges.pkl", 'rb') as pkl_file:
+root = '/gpfs/ostor/ossc9424/homedir/Dakota_Network/'
+
+with open(root + "path_to_family_edges.pkl", 'rb') as pkl_file:
     family_edges = pickle.load(pkl_file)
 
-with open("'/gpfs/ostor/ossc9424/homedir/Dakota_Network/path_to_household_edges.pkl", 'rb') as pkl_file:
+with open(root + "path_to_household_edges.pkl", 'rb') as pkl_file:
     household_edges = pickle.load(pkl_file)
 
-with open("'/gpfs/ostor/ossc9424/homedir/Dakota_Network/path_to_neighbor_edges.pkl", 'rb') as pkl_file:
+with open(root + "path_to_neighbor_edges.pkl", 'rb') as pkl_file:
     neighbor_edges = pickle.load(pkl_file)
 
-with open("'/gpfs/ostor/ossc9424/homedir/Dakota_Network/path_to_collague_edges.pkl", 'rb') as pkl_file:
+with open(root + "path_to_collague_edges.pkl", 'rb') as pkl_file:
     colleague_edges = pickle.load(pkl_file)
 
-with open("'/gpfs/ostor/ossc9424/homedir/Dakota_Network/path_to_education_edges.pkl", 'rb') as pkl_file:
+with open(root + "path_to_education_edges.pkl", 'rb') as pkl_file:
     education_edges = pickle.load(pkl_file)
 
 num_family_connections = []

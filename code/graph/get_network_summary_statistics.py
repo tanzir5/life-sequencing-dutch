@@ -8,21 +8,21 @@ import pickle
 # neighbor_edges = {}
 # education_edges = {}
 
-root = '/gpfs/ostor/ossc9424/homedir/Dakota_Network/'
+root = '/gpfs/ostor/ossc9424/homedir/Dakota_network/intermediates/'
 
-with open(root + "path_to_family_edges.pkl", 'rb') as pkl_file:
+with open(root + "family_2010_adjacency_dict.pkl", 'rb') as pkl_file:
     family_edges = pickle.load(pkl_file)
 
-with open(root + "path_to_household_edges.pkl", 'rb') as pkl_file:
+with open(root + "household_2010_adjacency_dict.pkl", 'rb') as pkl_file:
     household_edges = pickle.load(pkl_file)
 
-with open(root + "path_to_neighbor_edges.pkl", 'rb') as pkl_file:
+with open(root + "neighbor_2010_adjacency_dict.pkl", 'rb') as pkl_file:
     neighbor_edges = pickle.load(pkl_file)
 
-with open(root + "path_to_collague_edges.pkl", 'rb') as pkl_file:
+with open(root + "colleague_2010_adjacency_dict.pkl", 'rb') as pkl_file:
     colleague_edges = pickle.load(pkl_file)
 
-with open(root + "path_to_education_edges.pkl", 'rb') as pkl_file:
+with open(root + "classmate_2010_adjacency_dict.pkl", 'rb') as pkl_file:
     education_edges = pickle.load(pkl_file)
 
 num_family_connections = []
@@ -122,97 +122,147 @@ for person in family_edges:
     colleague_education_intersections.append(colleague_education_intersection)
 
 # Average across collections, get mean and std
+
+print("Computing summary statistics...", flush=True)
+
 save_data = {}
 
 # Family stuff
+print("Family degree N:", len(family_degree), flush=True)
 save_data['family'] = {}
+tenth, _, _, _, ninetieth = np.nanpercentile(family_degree, [10, 25, 50, 75, 90])
 save_data['family']['degree_mean'] = np.mean(family_degree)
+save_data['family']['degree_median'] = np.median(family_degree)
 save_data['family']['degree_std'] = np.std(family_degree)
-save_data['family']['degree_max'] = np.max(family_degree)
-save_data['family']['degree_min'] = np.min(family_degree)
+save_data['family']['degree_10th'] = tenth
+save_data['family']['degree_90th'] = ninetieth
+save_data['family']['degree_nonzero'] = np.count_nonzero(family_degree) / len(family_degree)
 
 # Household stuff
+print("Household degree N:", len(household_degree), flush=True)
 save_data['household'] = {}
+tenth, _, _, _, ninetieth = np.nanpercentile(household_degree, [10, 25, 50, 75, 90])
 save_data['household']['degree_mean'] = np.mean(household_degree)
+save_data['household']['degree_median'] = np.median(household_degree)
 save_data['household']['degree_std'] = np.std(household_degree)
-save_data['household']['degree_max'] = np.max(household_degree)
-save_data['household']['degree_min'] = np.min(household_degree)
+save_data['household']['degree_10th'] = tenth
+save_data['household']['degree_90th'] = ninetieth
+save_data['household']['degree_nonzero'] = np.count_nonzero(household_degree) / len(household_degree)
 
 # Neighbor stuff
+print("Neighbor degree N:", len(neighbor_degree), flush=True)
 save_data['neighbor'] = {}
+tenth, _, _, _, ninetieth = np.nanpercentile(neighbor_degree, [10, 25, 50, 75, 90])
 save_data['neighbor']['degree_mean'] = np.mean(neighbor_degree)
+save_data['neighbor']['degree_median'] = np.median(neighbor_degree)
 save_data['neighbor']['degree_std'] = np.std(neighbor_degree)
-save_data['neighbor']['degree_max'] = np.max(neighbor_degree)
-save_data['neighbor']['degree_min'] = np.min(neighbor_degree)
+save_data['neighbor']['degree_10th'] = tenth
+save_data['neighbor']['degree_90th'] = ninetieth
+save_data['neighbor']['degree_nonzero'] = np.count_nonzero(neighbor_degree) / len(neighbor_degree)
 
 # Colleague stuff
+print("Colleague degree N:", len(colleague_degree), flush=True)
 save_data['colleague'] = {}
+tenth, _, _, _, ninetieth = np.nanpercentile(colleague_degree, [10, 25, 50, 75, 90])
 save_data['colleague']['degree_mean'] = np.mean(colleague_degree)
+save_data['colleague']['degree_median'] = np.median(colleague_degree)
 save_data['colleague']['degree_std'] = np.std(colleague_degree)
-save_data['colleague']['degree_max'] = np.max(colleague_degree)
-save_data['colleague']['degree_min'] = np.min(colleague_degree)
+save_data['colleague']['degree_10th'] = tenth
+save_data['colleague']['degree_90th'] = ninetieth
+save_data['colleague']['degree_nonzero'] = np.count_nonzero(colleague_degree) / len(colleague_degree)
 
 # Education stuff
+print("Education degree N:", len(education_degree), flush=True)
 save_data['education'] = {}
+tenth, _, _, _, ninetieth = np.nanpercentile(education_degree, [10, 25, 50, 75, 90])
 save_data['education']['degree_mean'] = np.mean(education_degree)
+save_data['education']['degree_median'] = np.median(education_degree)
 save_data['education']['degree_std'] = np.std(education_degree)
-save_data['education']['degree_max'] = np.max(education_degree)
-save_data['education']['degree_min'] = np.min(education_degree)
+save_data['education']['degree_10th'] = tenth
+save_data['education']['degree_90th'] = ninetieth
+save_data['education']['degree_nonzero'] = np.count_nonzero(education_degree) / len(education_degree)
 
 # Intersection stuff
 save_data['intersection'] = {}
+tenth, _, _, _, ninetieth = np.nanpercentile(family_household_intersections, [10, 25, 50, 75, 90])
 save_data['intersection']['family_household_mean'] = np.mean(family_household_intersections)
+save_data['intersection']['family_household_median'] = np.median(family_household_intersections)
 save_data['intersection']['family_household_std'] = np.std(family_household_intersections)
-save_data['intersection']['family_household_min'] = np.min(family_household_intersections)
-save_data['intersection']['family_household_max'] = np.max(family_household_intersections)
+save_data['intersection']['family_household_10th'] = tenth
+save_data['intersection']['family_household_90th'] = ninetieth
+save_data['intersection']['family_household_nonzero'] = np.count_nonzero(family_household_intersections) / len(family_household_intersections)
 
+tenth, _, _, _, ninetieth = np.nanpercentile(family_neighbor_intersections, [10, 25, 50, 75, 90])
 save_data['intersection']['family_neighbor_mean'] = np.mean(family_neighbor_intersections)
+save_data['intersection']['family_neighbor_median'] = np.median(family_neighbor_intersections)
 save_data['intersection']['family_neighbor_std'] = np.std(family_neighbor_intersections)
-save_data['intersection']['family_neighbor_min'] = np.min(family_neighbor_intersections)
-save_data['intersection']['family_neighbor_max'] = np.max(family_neighbor_intersections)
+save_data['intersection']['family_neighbor_10th'] = tenth
+save_data['intersection']['family_neighbor_90th'] = ninetieth
+save_data['intersection']['family_neighbor_nonzero'] = np.count_nonzero(family_neighbor_intersections) / len(family_neighbor_intersections)
 
+tenth, _, _, _, ninetieth = np.nanpercentile(family_colleague_intersections, [10, 25, 50, 75, 90])
 save_data['intersection']['family_colleague_mean'] = np.mean(family_colleague_intersections)
+save_data['intersection']['family_colleague_median'] = np.median(family_colleague_intersections)
 save_data['intersection']['family_colleague_std'] = np.std(family_colleague_intersections)
-save_data['intersection']['family_colleague_min'] = np.min(family_colleague_intersections)
-save_data['intersection']['family_colleague_max'] = np.max(family_colleague_intersections)
+save_data['intersection']['family_colleague_10th'] = tenth
+save_data['intersection']['family_colleague_90th'] = ninetieth
+save_data['intersection']['family_colleague_nonzero'] = np.count_nonzero(family_colleague_intersections) / len(family_colleague_intersections)
 
+tenth, _, _, _, ninetieth = np.nanpercentile(family_education_intersections, [10, 25, 50, 75, 90])
 save_data['intersection']['family_education_mean'] = np.mean(family_education_intersections)
+save_data['intersection']['family_education_median'] = np.median(family_education_intersections)
 save_data['intersection']['family_education_std'] = np.std(family_education_intersections)
-save_data['intersection']['family_education_min'] = np.min(family_education_intersections)
-save_data['intersection']['family_education_max'] = np.max(family_education_intersections)
+save_data['intersection']['family_education_10th'] = tenth
+save_data['intersection']['family_education_90th'] = ninetieth
+save_data['intersection']['family_education_nonzero'] = np.count_nonzero(family_education_intersections) / len(family_education_intersections)
 
-
+tenth, _, _, _, ninetieth = np.nanpercentile(household_neighbor_intersections, [10, 25, 50, 75, 90])
 save_data['intersection']['household_neighbor_mean'] = np.mean(household_neighbor_intersections)
-save_data['intersection']['houshold_neighbor_std'] = np.std(household_neighbor_intersections)
-save_data['intersection']['household_neighbor_min'] = np.min(household_neighbor_intersections)
-save_data['intersection']['houshold_neighbor_max'] = np.max(household_neighbor_intersections)
+save_data['intersection']['household_neighbor_median'] = np.median(household_neighbor_intersections)
+save_data['intersection']['household_neighbor_std'] = np.std(household_neighbor_intersections)
+save_data['intersection']['household_neighbor_10th'] = tenth
+save_data['intersection']['household_neighbor_90th'] = ninetieth
+save_data['intersection']['household_neighbor_nonzero'] = np.count_nonzero(household_neighbor_intersections) / len(household_neighbor_intersections)
 
+tenth, _, _, _, ninetieth = np.nanpercentile(household_colleague_intersections, [10, 25, 50, 75, 90])
 save_data['intersection']['household_colleague_mean'] = np.mean(household_colleague_intersections)
-save_data['intersection']['houshold_colleague_std'] = np.std(household_colleague_intersections)
-save_data['intersection']['household_colleague_min'] = np.min(household_colleague_intersections)
-save_data['intersection']['houshold_colleague_max'] = np.max(household_colleague_intersections)
+save_data['intersection']['household_colleague_median'] = np.median(household_colleague_intersections)
+save_data['intersection']['household_colleague_std'] = np.std(household_colleague_intersections)
+save_data['intersection']['household_colleague_10th'] = tenth
+save_data['intersection']['household_colleague_90th'] = ninetieth
+save_data['intersection']['household_colleague_nonzero'] = np.count_nonzero(household_colleague_intersections) / len(household_colleague_intersections)
 
+tenth, _, _, _, ninetieth = np.nanpercentile(household_education_intersections, [10, 25, 50, 75, 90])
 save_data['intersection']['household_education_mean'] = np.mean(household_education_intersections)
-save_data['intersection']['houshold_education_std'] = np.std(household_education_intersections)
-save_data['intersection']['household_education_min'] = np.min(household_education_intersections)
-save_data['intersection']['houshold_education_max'] = np.max(household_education_intersections)
+save_data['intersection']['household_education_median'] = np.median(household_education_intersections)
+save_data['intersection']['household_education_std'] = np.std(household_education_intersections)
+save_data['intersection']['household_education_10th'] = tenth
+save_data['intersection']['household_education_90th'] = ninetieth
+save_data['intersection']['household_education_nonzero'] = np.count_nonzero(household_education_intersections) / len(household_education_intersections)
 
-
+tenth, _, _, _, ninetieth = np.nanpercentile(neighbor_colleague_intersections, [10, 25, 50, 75, 90])
 save_data['intersection']['neighbor_colleague_mean'] = np.mean(neighbor_colleague_intersections)
+save_data['intersection']['neighbor_colleague_median'] = np.median(neighbor_colleague_intersections)
 save_data['intersection']['neighbor_colleague_std'] = np.std(neighbor_colleague_intersections)
-save_data['intersection']['neighbor_colleague_min'] = np.min(neighbor_colleague_intersections)
-save_data['intersection']['neighbor_colleague_max'] = np.max(neighbor_colleague_intersections)
+save_data['intersection']['neighbor_colleague_10th'] = tenth
+save_data['intersection']['neighbor_colleague_90th'] = ninetieth
+save_data['intersection']['neighbor_colleague_nonzero'] = np.count_nonzero(neighbor_colleague_intersections) / len(neighbor_colleague_intersections)
 
+tenth, _, _, _, ninetieth = np.nanpercentile(neighbor_education_intersections, [10, 25, 50, 75, 90])
 save_data['intersection']['neighbor_education_mean'] = np.mean(neighbor_education_intersections)
+save_data['intersection']['neighbor_education_median'] = np.median(neighbor_education_intersections)
 save_data['intersection']['neighbor_education_std'] = np.std(neighbor_education_intersections)
-save_data['intersection']['neighbor_education_min'] = np.min(neighbor_education_intersections)
-save_data['intersection']['neighbor_education_max'] = np.max(neighbor_education_intersections)
+save_data['intersection']['neighbor_education_10th'] = tenth
+save_data['intersection']['neighbor_education_90th'] = ninetieth
+save_data['intersection']['neighbor_education_nonzero'] = np.count_nonzero(neighbor_education_intersections) / len(neighbor_education_intersections)
 
-
+tenth, _, _, _, ninetieth = np.nanpercentile(colleague_education_intersections, [10, 25, 50, 75, 90])
 save_data['intersection']['colleague_education_mean'] = np.mean(colleague_education_intersections)
+save_data['intersection']['colleague_education_median'] = np.median(colleague_education_intersections)
 save_data['intersection']['colleague_education_std'] = np.std(colleague_education_intersections)
-save_data['intersection']['colleague_education_min'] = np.min(colleague_education_intersections)
-save_data['intersection']['colleague_education_max'] = np.max(colleague_education_intersections)
+save_data['intersection']['colleague_education_10th'] = tenth
+save_data['intersection']['colleague_education_90th'] = ninetieth
+save_data['intersection']['colleague_education_nonzero'] = np.count_nonzero(colleague_education_intersections) / len(colleague_education_intersections)
 
 # Save everything
 with open("'/gpfs/ostor/ossc9424/homedir/Life_Course_Evaluation/network_summary_statistics.pkl", 'wb') as pkl_file:

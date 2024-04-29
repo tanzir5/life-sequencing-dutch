@@ -6,18 +6,14 @@ import json
 from tqdm import tqdm
 import logging 
 
-def warning_message(df, column, path):
-  print(f"Ignoring {column} from {path}")
-  print(f"dtype of {column} is {df[column].dtype}")
 
+PII_COLS = ['RINPERSOON, RINADRES, BEID, BRIN']
 
 def process_numeric_column(name, data):
   ret_dict = {}
   tenth, q1, q2, q3, ninetieth = np.nanpercentile(data, [10, 25, 50, 75, 90])
   ret_dict[name] = {
-    'min': float(np.nanmin(data)),
     'median': float(np.nanmedian(data)),
-    'max': float(np.nanmax(data)),
     'mean': float(np.nanmean(data)),
     'std_dev': float(np.nanstd(data)),
     '10th_percentile': float(tenth),
@@ -60,10 +56,6 @@ def gen_meta_data(df, source_file_path):
     else:
       metadata['cov_matrix'] = np.cov(numeric_data, rowvar=False).tolist()
     metadata['numeric_columns'] = numeric_columns
-    # print(len(numeric_columns))
-    # print(metadata['cov_matrix'])
-    # print(numeric_columns)
-    # print(numeric_data.shape)
     assert(len(metadata['cov_matrix']) == len(numeric_columns))
   return metadata
 
@@ -73,24 +65,35 @@ def process(source_file_path, target_file_path):
   summary_dict = {
     'metadata': gen_meta_data(df, source_file_path)
   }
+  has_pii_cols = []
   logging.debug("Processing columns")
   for column in df.columns:
     logging.debug("current column: %s", column)
+    if column in PII_COLS:
+      has_pii_cols.append(column)
+      continue
+
     if np.issubdtype(df[column].dtype, np.number):
       summary_dict.update(process_numeric_column(column, df[column]))
     elif df[column].dtype=='object':
       summary_dict.update(process_categorical_column(column, df[column]))
     else:
-      warning_message(df, column, source_file_path)
-
+      logging.warning(
+        f"Ignoring {column} from {source_file_path}; "
+        f"dtype of {column} is {df[column].dtype}"
+      )
+  
+  summary_dict['has_pii_columns'] = has_pii_cols
   logging.debug("Writing output")
   with open(target_file_path, 'w') as f:
     try:
       json.dump(summary_dict, f)
     except Exception as e:
-      logging.warning("An error occurred: %s", e)
-      logging.warning("%s could not be jsonified", target_file_path)
-  
+      logging.error(
+        f"{target_file_path} could not be jsonified", 
+        exc_info=True,
+      )
+
 def create_dir(path):
   pass
   if os.path.exists(path):
@@ -101,29 +104,20 @@ def create_dir(path):
 if __name__ == '__main__':
 
   logging.basicConfig(
-    format='%(asctime)s %(name)s %(levelname)s %(message)s',
+    format='%(asctime)s %(name)s %(levelname)s: %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S',
-    level=logging.DEBUG)
+    level=logging.DEBUG
+  )
   
   root_dir = sys.argv[1]
   target_dir = sys.argv[2]
   for source_root, dirs, files in os.walk(root_dir):
     target_root = source_root.replace(root_dir, target_dir)
     create_dir(target_root)
-
-    # print("ROOT"*10)
-    # print(root)
-    # input()
-    # print("DIRS"*10)
-    # print(dirs)
-    # input()
-    # print("FILES"*10)
-    # print(files)
-    # input()
     
     for f in tqdm(files):
       if f.endswith('.csv'):
         source_path = os.path.join(source_root, f)
-        target_path = os.path.join(target_root, f.split('.csv')[0]) + '.json'
+        target_path = os.path.join(target_root, f.split('.csv')[0]) + '.txt'
         process(source_path, target_path)
         

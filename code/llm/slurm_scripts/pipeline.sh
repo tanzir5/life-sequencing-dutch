@@ -11,7 +11,9 @@
 
 echo "job started"
 
+cd /gpfs/ostor/ossc9424/homedir/Tanzir/LifeToVec_Nov/ 
+
 date
-time python pipeline.py projects/dutch_real/pipeline_cfg.json
+time python -m src.new_code.pipeline projects/dutch_real/pipeline_cfg.json
 
 echo "job ended successfully"

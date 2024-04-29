@@ -132,7 +132,9 @@ if __name__ == '__main__':
     for f in tqdm(files):
       if f.endswith(source_extension):
         source_path = os.path.join(source_root, f)
-        target_path = os.path.join(target_root, f.split(source_extension)[0]) + 
-                      target_extension
+        target_path = (
+          os.path.join(target_root, f.split(source_extension)[0]) + 
+          target_extension
+        )
         process(source_path, target_path)
         

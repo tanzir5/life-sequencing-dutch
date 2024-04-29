@@ -140,9 +140,11 @@ def generate_encoded_data(
     print_now(f'a random id is {random_id}, type is {type(random_id)}')
 
   if shuffle:
-    new_seq_path = sequence_path[:-5] + "_shuffled.json"
+    new_seq_path = sequence_path[:-5] + "_shuffled_work.json"
     shuffle_json(sequence_path, new_seq_path)
     sequence_path = new_seq_path
+    print("shuffled json file created")
+    exit(0)
 
   mlm = MLM('dutch_v0', 512)
   mlm.set_vocabulary(custom_vocab)

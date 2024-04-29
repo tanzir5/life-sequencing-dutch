@@ -5,6 +5,7 @@ import numpy as np
 import json
 from tqdm import tqdm
 import logging 
+import pyreadstat
 
 
 PII_COLS = ['RINPERSOON, RINADRES, BEID, BRIN']
@@ -61,7 +62,13 @@ def gen_meta_data(df, source_file_path):
 
 def process(source_file_path, target_file_path):
   logging.debug("Starting with file %s.", source_file_path)
-  df = pd.read_csv(source_file_path, sep=None, engine="python")
+  if source_file_path.endswith('.csv'):
+    df = pd.read_csv(source_file_path, sep=None, engine="python")
+  elif source_file_path.endswith('.sav'):
+    df, meta = pyreadstat.read_sav(source_file_path)
+  else:
+    logging.critical(f'wrong file extension found for {source_file_path}')
+    exit(0)
   summary_dict = {
     'metadata': gen_meta_data(df, source_file_path)
   }
@@ -111,13 +118,21 @@ if __name__ == '__main__':
   
   root_dir = sys.argv[1]
   target_dir = sys.argv[2]
+  if len(sys.argv) > 3:
+    source_extension = '.' + sys.argv[3]
+  else:
+    source_extension = '.csv'
+
+  target_extension = '.txt'
+
   for source_root, dirs, files in os.walk(root_dir):
     target_root = source_root.replace(root_dir, target_dir)
     create_dir(target_root)
     
     for f in tqdm(files):
-      if f.endswith('.csv'):
+      if f.endswith(source_extension):
         source_path = os.path.join(source_root, f)
-        target_path = os.path.join(target_root, f.split('.csv')[0]) + '.txt'
+        target_path = os.path.join(target_root, f.split(source_extension)[0]) + 
+                      target_extension
         process(source_path, target_path)
         

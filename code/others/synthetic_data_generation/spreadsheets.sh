@@ -23,5 +23,6 @@ cd /gpfs/ostor/ossc9424/homedir/synthetic_data/
 
 date
 time python gen_spreadsheets.py "$DATAPATH/dutch_real/raw_data/" "$DATAPATH/synthetic/raw_data/"
+time python gen_spreadsheets.py "$DATAPATH/dutch_real/data/" "$DATAPATH/synthetic/data/"
 
 echo "job ended successfully" 

@@ -1,6 +1,12 @@
 import os
 import sys 
 
+'''
+Example usages:
+python check_generation.py "$DATAPATH/dutch_real/raw_data/" csv "$DATAPATH/synthetic/raw_data/" txt
+python check_generation.py "$DATAPATH/dutch_real/data/" csv "$DATAPATH/synthetic/data/" txt
+'''
+
 
 def find_files(base_dir, extension):
     """ Walk through the directory recursively and find all files with the given extension. """

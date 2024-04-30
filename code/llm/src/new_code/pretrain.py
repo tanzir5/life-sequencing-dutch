@@ -73,6 +73,17 @@ def get_train_val_dataloaders(dataset, batch_size, train_split=0.8, shuffle=True
     DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=71)
   )
 
+def subset(data, lim):
+  for key in data:
+    data[key] = data[key][:lim]
+  # data["input_ids"] = data["input_ids"][:lim]
+  # data["padding_mask"] = data["padding_mask"][:lim]
+  # data["original_sequence"] = data["original_sequence"][:lim]
+  # data["target_tokens"] = data["target_tokens"][:lim]
+  # data["target_pos"] = data["target_pos"][:lim]
+  # data["target_cls"] = data["target_cls"][:lim]
+  return data
+
 def pretrain(cfg):
   hparams_path = cfg['HPARAMS_PATH']#'src/new_code/regular_hparams.txt'
   ckpoint_dir = cfg['CHECKPOINT_DIR']
@@ -92,6 +103,7 @@ def pretrain(cfg):
     for file_path in files:
       mlm_paths.append(os.path.join(root, file_path))
 
+  LIM = 1000
   val_dataloader = None
   batch_size = cfg['BATCH_SIZE']
   for epoch in range(cfg['MAX_EPOCHS']):
@@ -100,10 +112,12 @@ def pretrain(cfg):
         if val_dataloader is None:
           with open(mlm_path, 'rb') as f:
             dataset = pickle.load(f)
+            dataset.data = subset(dataset.data, LIM)
           val_dataloader = DataLoader(dataset, batch_size=batch_size)
         continue
       with open(mlm_path, 'rb') as f:
         dataset = pickle.load(f)
+        dataset.data = subset(dataset.data, LIM)
       callbacks = get_callbacks(ckpoint_dir, counter)
       trainer = Trainer(
         default_root_dir=ckpoint_dir,

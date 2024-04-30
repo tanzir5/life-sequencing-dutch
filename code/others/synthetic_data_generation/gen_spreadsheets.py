@@ -3,12 +3,11 @@ import os
 import sys
 import numpy as np
 import json
-from tqdm import tqdm
 import logging 
 import pyreadstat
 
 
-PII_COLS = ['RINPERSOON, RINADRES, BEID, BRIN']
+PII_COLS = ['RINPERSOON', 'RINADRES', 'BEID', 'BRIN', 'RINPERSOONS']
 
 def process_numeric_column(name, data):
   ret_dict = {}
@@ -77,6 +76,7 @@ def process(source_file_path, target_file_path):
   for column in df.columns:
     logging.debug("current column: %s", column)
     if column in PII_COLS:
+      logging.debug("column has PII")
       has_pii_cols.append(column)
       continue
 
@@ -129,7 +129,7 @@ if __name__ == '__main__':
     target_root = source_root.replace(root_dir, target_dir)
     create_dir(target_root)
     
-    for f in tqdm(files):
+    for f in files:
       if f.endswith(source_extension):
         source_path = os.path.join(source_root, f)
         target_path = (

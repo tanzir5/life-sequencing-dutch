@@ -5,9 +5,9 @@ import numpy as np
 import json
 import logging 
 import pyreadstat
+from utils import check_column_names
 
-
-PII_COLS = ['RINPERSOON', 'RINADRES', 'BEID', 'BRIN', 'RINPERSOONS']
+PII_COLS = ['RINPERSOON', 'RINADRES', 'BEID', 'BRIN']
 
 def process_numeric_column(name, data):
   ret_dict = {}
@@ -75,7 +75,7 @@ def process(source_file_path, target_file_path):
   logging.debug("Processing columns")
   for column in df.columns:
     logging.debug("current column: %s", column)
-    if column in PII_COLS:
+    if check_column_names([column], PII_COLS):
       logging.debug("column has PII")
       has_pii_cols.append(column)
       continue

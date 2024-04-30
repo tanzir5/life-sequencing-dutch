@@ -265,5 +265,5 @@ save_data['intersection']['colleague_education_90th'] = ninetieth
 save_data['intersection']['colleague_education_nonzero'] = np.count_nonzero(colleague_education_intersections) / len(colleague_education_intersections)
 
 # Save everything
-with open("'/gpfs/ostor/ossc9424/homedir/Life_Course_Evaluation/network_summary_statistics.pkl", 'wb') as pkl_file:
+with open("/gpfs/ostor/ossc9424/homedir/Life_Course_Evaluation/network_summary_statistics.pkl", 'wb') as pkl_file:
     pickle.dump(save_data, pkl_file)

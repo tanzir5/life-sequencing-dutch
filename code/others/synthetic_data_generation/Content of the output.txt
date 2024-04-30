@@ -18,7 +18,7 @@ q1 (the first quartile)
 q3 (the second quartile)
 
 For categorical columns:
-fraction of rows for each category
+fraction of rows for the 200 most frequent categories and one entry for others
 
 For all columns:
 null_fraction (the number of rows with null values)

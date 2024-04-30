@@ -28,8 +28,12 @@ def process_categorical_column(name, data):
   ret_dict = {
     name: {}
   }
-  for category in data.unique():
-    ret_dict[name][category] = float((data==category).sum()/len(data))
+  most_frequent = data.value_counts().head(200).to_dict()
+  total = 0
+  for category in most_frequent:
+    ret_dict[name][category] = most_frequent[category]/len(data)
+    total += most_frequent[category]
+  ret_dict['_others'] = (len(data) - total)/len(data) 
   ret_dict[name]['null_fraction'] = float(data.isna().sum()/len(data))
   return ret_dict
 

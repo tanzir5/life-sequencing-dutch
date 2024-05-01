@@ -5,9 +5,10 @@ import numpy as np
 import json
 import logging 
 import pyreadstat
-from utils import check_column_names
+from utils import check_column_names, subsample_from_ids
 
 PII_COLS = ['RINPERSOON', 'RINADRES', 'BEID', 'BRIN']
+
 
 def process_numeric_column(name, data):
   ret_dict = {}
@@ -72,6 +73,11 @@ def process(source_file_path, target_file_path):
   else:
     logging.critical(f'wrong file extension found for {source_file_path}')
     exit(0)
+  
+  if "SPOLISBUS" in source_file_path:
+    logging.info("Drawing subsample")
+    df = subsample_from_ids(df, frac=0.1)
+  
   summary_dict = {
     'metadata': gen_meta_data(df, source_file_path)
   }

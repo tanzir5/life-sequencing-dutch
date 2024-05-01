@@ -11,8 +11,7 @@ def check_column_names(column_names, names_to_check):
 
 
 def subsample_from_ids(df, id_col="RINPERSOON", frac=0.1):
-  """Draw random subsample from dataframe where there are multiple rows
-  for `id_col`, but for a given sampled key, all rows should be returned.
+  """Draw all rows from a random sample of record ids.
 
   Args:
     df (pd.DataFrame): dataframe to sample from. 

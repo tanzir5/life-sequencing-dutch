@@ -1,3 +1,3 @@
 The keys refer to the different types of networks (family, household, colleague, neighbour, education), as well as to the intersection of two of these network types combined.
 
-The summary statistics are on the number of connections per person in the respective networks: mean, median, standard deviation, 10th and 90th percentile, fraction non-zero.
+The summary statistics are on the number of connections per person in the respective networks: mean, median, standard deviation, 10th and 90th percentile, fraction non-zero. These values are also computed for every pairwise layer .intersection

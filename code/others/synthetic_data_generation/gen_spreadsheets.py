@@ -68,7 +68,11 @@ def process(source_file_path, target_file_path):
   logging.debug("Starting with file %s.", source_file_path)
   if source_file_path.endswith('.csv'):
     if "SPOLISBUS" in source_file_path:
-      df = pd.read_csv(source_file_path, sep=";") # important to not specify the much slower python engine here
+      df = pd.read_csv(source_file_path, sep=";") 
+      logging.info("Drawing subsample")
+      df = subsample_from_ids(df, frac=0.01)
+    elif "GBAHUISHOUDENS" in source_file_path:
+      df = pd.read_csv(source_file_path, sep=",") 
       logging.info("Drawing subsample")
       df = subsample_from_ids(df, frac=0.01)
     else:

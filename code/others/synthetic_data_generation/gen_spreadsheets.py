@@ -67,16 +67,17 @@ def gen_meta_data(df, source_file_path):
 def process(source_file_path, target_file_path):
   logging.debug("Starting with file %s.", source_file_path)
   if source_file_path.endswith('.csv'):
-    df = pd.read_csv(source_file_path, sep=None, engine="python")
+    if "SPOLISBUS" in source_file_path:
+      df = pd.read_csv(source_file_path, sep=";") # important to not specify the much slower python engine here
+      logging.info("Drawing subsample")
+      df = subsample_from_ids(df, frac=0.01)
+    else:
+      df = pd.read_csv(source_file_path, sep=None, engine="python")
   elif source_file_path.endswith('.sav'):
     df, meta = pyreadstat.read_sav(source_file_path)
   else:
     logging.critical(f'wrong file extension found for {source_file_path}')
     exit(0)
-  
-  if "SPOLISBUS" in source_file_path:
-    logging.info("Drawing subsample")
-    df = subsample_from_ids(df, frac=0.1)
   
   summary_dict = {
     'metadata': gen_meta_data(df, source_file_path)

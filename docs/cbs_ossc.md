@@ -101,4 +101,4 @@ trainer = pl.trainer(strategy=ddp)
 
 ## Open questions 
 
-- [ ] I noticed a couple of times that the GPU node crashes when doing `scancel`. It then goes into `down` state and does not recover fast / maybe not even automatically. Maybe this has to do with the virtualization of the OSSC. 
+- [x] ~~I noticed a couple of times that the GPU node crashes when doing `scancel`. It then goes into `down` state and does not recover fast / maybe not even automatically. Maybe this has to do with the virtualization of the OSSC.~~ This has been work fine as of late.

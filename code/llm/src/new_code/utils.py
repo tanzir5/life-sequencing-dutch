@@ -4,6 +4,8 @@ import json
 from functools import partial
 import os
 import random
+import time
+import logging
 
 print_now = partial(print, flush=True)
 
@@ -16,7 +18,35 @@ def read_json(path):
     data = json.load(file)
   return data  
 
-def shuffle_json(input_file_path, output_file_path):
+def shuffle_json(input_file, output_file):
+  start = time.time()
+  logging.info("shuffle json starting")
+  if os.path.exists(output_file):
+    # Generate new filename with timestamp
+    timestamp = time.strftime("%Y%m%d%H%M%S")
+    output_file = f"{output_file[:-5]}_{timestamp}.json"
+    logging.warning(f"Output file already exists. Writing to new file: {output_file}")
+
+  # Read lines from input file
+  with open(input_file, 'r', encoding='utf-8') as f:
+    lines = f.readlines()
+
+  end = time.time()
+  logging.info(f"{end-start} seconds elapsed for reading")
+  start = end
+  # Shuffle lines
+  random.shuffle(lines)
+  end = time.time()
+  logging.info(f"{end-start} seconds elapsed for shuffling")
+  start = end
+  # Write shuffled lines to output file
+  with open(output_file, 'w', encoding='utf-8') as f:
+    for line in lines:
+      f.write(line)
+  end = time.time()
+  logging.info(f"{end-start} seconds elapsed for writing")
+
+def shuffle_json_memory_efficient(input_file_path, output_file_path):
     def index_file(file_path):
       index = []
       offset = 0

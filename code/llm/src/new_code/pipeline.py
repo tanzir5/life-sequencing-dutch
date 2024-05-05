@@ -17,7 +17,7 @@ import pickle
 import fnmatch
 import csv
 import time
-
+import logging
 
 '''
   The pipeline is like the following: 
@@ -143,8 +143,8 @@ def generate_encoded_data(
     new_seq_path = sequence_path[:-5] + "_shuffled_work.json"
     shuffle_json(sequence_path, new_seq_path)
     sequence_path = new_seq_path
-    print("shuffled json file created")
-    exit(0)
+    logging.info("Shuffled json file created")
+
 
   mlm = MLM('dutch_v0', 512)
   mlm.set_vocabulary(custom_vocab)
@@ -192,9 +192,9 @@ def generate_encoded_data(
       try:
         person_dict = json.loads(line)
       except json.JSONDecodeError:
-        print(f"Error: Failed to decode JSON.\n line = {line}")
+        logging.error(f"Failed to decode JSON.\n line = {line}")
       except Exception as e:
-        print(f"Error: {str(e)}.\n line = {line}")
+        logging.error(f"{str(e)}.\n line = {line}")
       if len(person_dict['sentence']) < min_event_threshold:
         continue
       # Now 'json_data' contains the list from the current line
@@ -258,6 +258,11 @@ def get_time_range(cfg):
   return time_range
 
 if __name__ == "__main__":
+  logging.basicConfig(
+    format='%(asctime)s %(name)s %(levelname)s: %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+    level=logging.DEBUG
+  )
   CFG_PATH = sys.argv[1]
   cfg = read_json(CFG_PATH)
 

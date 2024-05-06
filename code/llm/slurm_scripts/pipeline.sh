@@ -6,8 +6,8 @@
 #SBATCH --time=12:00:00
 #SBATCH --mem=900G
 #SBATCH -p comp_env
-#SBATCH -e /gpfs/ostor/ossc9424/homedir/Tanzir/LifeToVec_Nov/projects/dutch_real/logs/pipeline_stderr_$(date +%Y-%m-%d_%H-%M-%S).txt
-#SBATCH -o /gpfs/ostor/ossc9424/homedir/Tanzir/LifeToVec_Nov/projects/dutch_real/logs/pipeline_stdout_$(date +%Y-%m-%d_%H-%M-%S).txt
+#SBATCH -e /gpfs/ostor/ossc9424/homedir/Tanzir/LifeToVec_Nov/projects/dutch_real/logs/%x.%j.err
+#SBATCH -o /gpfs/ostor/ossc9424/homedir/Tanzir/LifeToVec_Nov/projects/dutch_real/logs/%x.%j.out
 
 echo "job started"
 

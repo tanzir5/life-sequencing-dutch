@@ -65,6 +65,7 @@ def get_raw_file_name(path):
   return path.split("/")[-1].split(".")[0]
 
 def create_vocab(vocab_write_path, data_file_paths, vocab_name, primary_key):
+  logging.debug("Starting create_vocab function")
   data_files = []
   for path in data_file_paths:
     data_files.append(
@@ -81,6 +82,7 @@ def create_vocab(vocab_write_path, data_file_paths, vocab_name, primary_key):
   # with open(vocab_write_path, 'w') as f:
   #   json.dump(custom_vocab.token2index, f)
   custom_vocab.save_vocab(vocab_write_path)
+  logging.debug("Finished create_vocab function")
   return custom_vocab
 
 def get_ids(path):
@@ -246,11 +248,12 @@ def generate_encoded_data(
   shuffle=False,
   chunk_size=5000,
 ):
+  logging.debug("Starting generate_encoded_data function")
   if needed_ids_path:
     needed_ids = get_ids(needed_ids_path)
-    print_now(f'needed ids # = {len(needed_ids)}')
+    logging.info('needed ids # = %s', len(needed_ids))
     random_id = list(needed_ids)[0]
-    print_now(f'a random id is {random_id}, type is {type(random_id)}')
+    logging.info('a random id is %s, type is %s', random_id, type(random_id))
   else:
     needed_ids = None
 
@@ -276,11 +279,14 @@ def generate_encoded_data(
 
   progress_bar = tqdm(total=total_docs, desc="Encoding documents", unit="doc")
 
+  logging.info("Starting multiprocessing")
   with Pool(processes=num_processes) as pool:
     for data_dict_result in pool.imap_unordered(encode_documents, chunks):
       write_to_hdf5(write_path, data_dict_result)
       progress_bar.update(chunk_size)
   progress_bar.close()
+  logging.debug("Finished generate_encoded_data function")
+
 
 def get_data_files_from_directory(directory, primary_key):
   data_files = []
@@ -321,7 +327,7 @@ if __name__ == "__main__":
   data_file_paths = get_data_files_from_directory(
     cfg[DATA_DIRECTORY_PATH], primary_key
   )
-  print_now(f"# of data_files_paths = {len(data_file_paths)}")
+  logging.info("# of data_files_paths = %s", len(data_file_paths))
 
   custom_vocab = create_vocab(
     data_file_paths=data_file_paths,

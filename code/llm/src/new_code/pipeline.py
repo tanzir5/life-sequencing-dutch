@@ -107,7 +107,7 @@ def count_lines(file_path):
   )
   line_count = int(result.stdout.split()[0])
   end = time.time()
-  logger.info(f"Time needed to wc -l {file_path}: {end-start} seconds")
+  logging.info(f"Time needed to wc -l {file_path}: {end-start} seconds")
   return line_count
 
 def load_json_obj(document):

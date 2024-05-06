@@ -2,7 +2,7 @@
   "data_directory_path": "projects/dutch_real/data/",
   "SEQUENCE_PATH": "projects/dutch_real/gen_data/people.json",
   "vocab_write_path": "projects/dutch_real/gen_data/vocab.csv",
-  "MLM_WRITE_DIRECTORY": "projects/dutch_real/gen_data/mlm_encoded_upto_2017/",
+  "MLM_WRITE_PATH": "projects/dutch_real/gen_data/mlm_encoded_upto_2017.h5",
   "DO_MLM": true,
   "primary_key": "RINPERSOON",
   "vocab_name": "dutch_vocab_2017_v0",

@@ -21,7 +21,7 @@ import logging
 import h5py
 import subprocess
 import multiprocessing as mp
-
+from functools import partial
 
 from multiprocessing import Pool
 from tqdm import tqdm
@@ -47,19 +47,18 @@ TIME_RANGE_START = "TIME_RANGE_START"
 TIME_RANGE_END = "TIME_RANGE_END"
 
 min_event_threshold = 5
-CHUNK_SIZE = 1000000
 
 def read_jsonl_file_in_chunks(file_path, chunk_size, needed_ids, do_mlm):
   """Generator that yields chunks of JSON objects from a JSONL file."""
   with open(file_path, 'r') as file:
     chunk = []
     for line in file:
-      chunk.append(json.loads(line))
+      chunk.append(line)
       if len(chunk) == chunk_size:
-        yield (chunk, needed_ids, do_mlm)
+        yield chunk
         chunk = []
     if chunk:  # Yield any remaining JSON objects
-        yield (chunk, needed_ids, do_mlm)
+        yield chunk
 
 def get_raw_file_name(path):
   return path.split("/")[-1].split(".")[0]
@@ -141,16 +140,27 @@ def init_data_dict(do_mlm):
 
 def update_data_dict(data_dict, output, do_mlm):
   data_dict['sequence_id'].append(str(output.sequence_id))
-  data_dict['original_sequence'].append(np.array(output.original_sequence))
-  data_dict['input_ids'].append(np.array(output.input_ids))
-  data_dict['padding_mask'].append(np.array(output.padding_mask))
+  data_dict['original_sequence'].append(output.original_sequence)
+  data_dict['input_ids'].append(output.input_ids)
+  data_dict['padding_mask'].append(output.padding_mask)
   if do_mlm:
-    data_dict['target_tokens'].append(np.array(output.target_tokens))
-    data_dict['target_pos'].append(np.array(output.target_pos))
-    data_dict['target_cls'].append(np.array(output.target_cls))
+    data_dict['target_tokens'].append(output.target_tokens)
+    data_dict['target_pos'].append(output.target_pos)
+    data_dict['target_cls'].append(output.target_cls)
 
+def convert_to_numpy(data_dict):
+  context_len = data_dict['original_sequence'].shape[1]
+  for key, value in data_dict.items():
+    if key == 'sequence_id':
+      continue
+    if key in ['target_tokens', 'target_pos']:
+      np_value = np.full((len(value), context_len), -1)
+      for i, row in enumerate(value):
+        np_value[i][:len(row)] = row
+      value = np_value
+    data_dict[key] = np.array(value)
 
-def encode_documents(docs, needed_ids, do_mlm):
+def encode_documents(docs, needed_ids, do_mlm, mlm):
   data_dict = init_data_dict(do_mlm)
   for document in docs:
     person_dict = load_json_obj(document)
@@ -177,9 +187,10 @@ def encode_documents(docs, needed_ids, do_mlm):
       continue
     update_data_dict(data_dict, output, do_mlm)
   
+  convert_to_numpy(data_dict)
   return data_dict
 
-def init_hdf5_datasets(h5f,data_dict):
+def init_hdf5_datasets(h5f, data_dict):
   """Initialize HDF5 datasets when they do not exist."""
   for key in data_dict:
     if key == 'sequence_id':
@@ -192,14 +203,81 @@ def init_hdf5_datasets(h5f,data_dict):
         compression="gzip"
       )
     else:
+      final_shape = list(data_dict[key].shape)
+      final_shape[0] = 0
+      final_shape = tuple(final_shape)
+      
+      maxshape = list(data_dict[key].shape)
+      maxshape[0] = None
+      maxshape = tuple(maxshape)
+
+      if len(data_dict[key].shape) > 1:
+        chunks = list(data_dict[key].shape)
+        chunks[0] = 1
+        chunks = tuple(chunks)
+      else:
+        chunks=True
       h5f.create_dataset(
         key, 
-        shape=(0, data_dict[key].shape[1]), 
-        maxshape=(None, data_dict[key].shape[1]), 
+        shape=final_shape,#(0, data_dict[key].shape[1]), 
+        maxshape=maxshape,#(None, data_dict[key].shape[1]), 
         dtype='i4', 
-        chunks=(1, data_dict[key].shape[1]), 
+        chunks=chunks,#(1, data_dict[key].shape[1]), 
         compression="gzip"
       )
+
+      # if len(data_dict[key].shape) > 1:
+      #   h5f.create_dataset(
+      #     key, 
+      #     shape=final_shape,#(0, data_dict[key].shape[1]), 
+      #     maxshape=maxshape,#(None, data_dict[key].shape[1]), 
+      #     dtype='i4', 
+      #     chunks=chunks,#(1, data_dict[key].shape[1]), 
+      #     compression="gzip"
+      #   )
+      # else:
+      #   h5f.create_dataset(
+      #     key, 
+      #     shape=(0, ), 
+      #     maxshape=(None, ), 
+      #     dtype='i4', 
+      #     chunks=True, 
+      #     compression="gzip"
+      #   )
+
+def debug_log_hdf5(
+  data_dict, 
+  h5f, 
+  d_sequence_id, 
+  d_original_sequence,
+  d_input_ids,
+  d_padding_mask,
+  d_target_tokens,
+  d_target_pos,
+  d_target_cls
+):
+  logging.debug("data dict shape printing")
+  for key, val in data_dict.items():
+    if key == 'sequence_id':
+      logging.debug(key, len(val))
+    else:
+      logging.debug(key, val.shape)
+
+  logging.debug("h5f shape printing")
+  for key, val in h5f.items():
+    if key == 'sequence_id':
+      logging.debug(key, len(val))
+    else:
+      logging.debug(key, val.shape)
+
+  logging.debug("after resize printing shape")
+  logging.debug('d_sequence_id', d_sequence_id.shape)
+  logging.debug('d_original_sequence', d_original_sequence.shape)
+  logging.debug('d_input_ids', d_input_ids.shape)
+  logging.debug('d_padding_mask', d_padding_mask.shape)
+  logging.debug('d_target_tokens', d_target_tokens.shape)
+  logging.debug('d_target_pos', d_target_pos.shape)
+  logging.debug('d_target_cls', d_target_cls.shape)
 
 
 def write_to_hdf5(write_path, data_dict):
@@ -207,6 +285,7 @@ def write_to_hdf5(write_path, data_dict):
   with h5py.File(write_path, 'a') as h5f:
     if 'sequence_id' not in h5f:
       init_hdf5_datasets(h5f, data_dict)
+    
     d_sequence_id = h5f['sequence_id']
     d_original_sequence = h5f['original_sequence']
     d_input_ids = h5f['input_ids']
@@ -228,6 +307,18 @@ def write_to_hdf5(write_path, data_dict):
       d_target_pos.resize(new_size, axis=0)
       d_target_cls.resize(new_size, axis=0)
 
+    debug_log_hdf5(
+      data_dict, 
+      h5f, 
+      d_sequence_id, 
+      d_original_sequence,
+      d_input_ids,
+      d_padding_mask,
+      d_target_tokens,
+      d_target_pos,
+      d_target_cls
+    )
+    
     for i in range(len(data_dict['sequence_id'])):
       d_sequence_id[current_size+i] = data_dict['sequence_id'][i]
       d_original_sequence[current_size+i] = data_dict['original_sequence'][i]
@@ -280,8 +371,14 @@ def generate_encoded_data(
   progress_bar = tqdm(total=total_docs, desc="Encoding documents", unit="doc")
 
   logging.info("Starting multiprocessing")
+  helper_encode_documents = partial(
+    encode_documents, 
+    needed_ids=needed_ids, 
+    do_mlm=do_mlm,
+    mlm=mlm,
+  )
   with Pool(processes=num_processes) as pool:
-    for data_dict_result in pool.imap_unordered(encode_documents, chunks):
+    for data_dict_result in pool.imap_unordered(helper_encode_documents, chunks):
       write_to_hdf5(write_path, data_dict_result)
       progress_bar.update(chunk_size)
   progress_bar.close()

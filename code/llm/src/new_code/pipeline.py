@@ -229,16 +229,16 @@ def debug_log_hdf5(data_dict, h5f):
   logging.debug("data dict shape printing")
   for key, val in data_dict.items():
     if key == 'sequence_id':
-      logging.debug(key, len(val))
+      logging.debug("%s, %s", key, len(val))
     else:
-      logging.debug(key, val.shape)
+      logging.debug("%s, %s", key, val.shape)
 
   logging.debug("After resize, h5f shape printing")
   for key, val in h5f.items():
     if key == 'sequence_id':
-      logging.debug(key, len(val))
+      logging.debug("%s, %s", key, len(val))
     else:
-      logging.debug(key, val.shape)
+      logging.debug("%s, %s", key, val.shape)
 
 def write_to_hdf5(write_path, data_dict):
   """Write processed data to an HDF5 file."""

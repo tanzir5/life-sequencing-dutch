@@ -219,43 +219,15 @@ def init_hdf5_datasets(h5f, data_dict):
         chunks=True
       h5f.create_dataset(
         key, 
-        shape=final_shape,#(0, data_dict[key].shape[1]), 
-        maxshape=maxshape,#(None, data_dict[key].shape[1]), 
+        shape=final_shape,
+        maxshape=maxshape, 
         dtype='i4', 
-        chunks=chunks,#(1, data_dict[key].shape[1]), 
+        chunks=chunks, 
         compression="gzip"
       )
 
-      # if len(data_dict[key].shape) > 1:
-      #   h5f.create_dataset(
-      #     key, 
-      #     shape=final_shape,#(0, data_dict[key].shape[1]), 
-      #     maxshape=maxshape,#(None, data_dict[key].shape[1]), 
-      #     dtype='i4', 
-      #     chunks=chunks,#(1, data_dict[key].shape[1]), 
-      #     compression="gzip"
-      #   )
-      # else:
-      #   h5f.create_dataset(
-      #     key, 
-      #     shape=(0, ), 
-      #     maxshape=(None, ), 
-      #     dtype='i4', 
-      #     chunks=True, 
-      #     compression="gzip"
-      #   )
 
-def debug_log_hdf5(
-  data_dict, 
-  h5f, 
-  d_sequence_id, 
-  d_original_sequence,
-  d_input_ids,
-  d_padding_mask,
-  d_target_tokens,
-  d_target_pos,
-  d_target_cls
-):
+def debug_log_hdf5(data_dict, h5f):
   logging.debug("data dict shape printing")
   for key, val in data_dict.items():
     if key == 'sequence_id':
@@ -263,71 +235,25 @@ def debug_log_hdf5(
     else:
       logging.debug(key, val.shape)
 
-  logging.debug("h5f shape printing")
+  logging.debug("After resize, h5f shape printing")
   for key, val in h5f.items():
     if key == 'sequence_id':
       logging.debug(key, len(val))
     else:
       logging.debug(key, val.shape)
 
-  logging.debug("after resize printing shape")
-  logging.debug('d_sequence_id', d_sequence_id.shape)
-  logging.debug('d_original_sequence', d_original_sequence.shape)
-  logging.debug('d_input_ids', d_input_ids.shape)
-  logging.debug('d_padding_mask', d_padding_mask.shape)
-  logging.debug('d_target_tokens', d_target_tokens.shape)
-  logging.debug('d_target_pos', d_target_pos.shape)
-  logging.debug('d_target_cls', d_target_cls.shape)
-
-
 def write_to_hdf5(write_path, data_dict):
   """Write processed data to an HDF5 file."""
   with h5py.File(write_path, 'a') as h5f:
     if 'sequence_id' not in h5f:
       init_hdf5_datasets(h5f, data_dict)
-    
-    d_sequence_id = h5f['sequence_id']
-    d_original_sequence = h5f['original_sequence']
-    d_input_ids = h5f['input_ids']
-    d_padding_mask = h5f['padding_mask']
-    if 'target_tokens' in data_dict:
-      d_target_tokens = h5f['target_tokens']
-      d_target_pos = h5f['target_pos']
-      d_target_cls = h5f['target_cls']
 
-    current_size = d_sequence_id.shape[0]
+    current_size = h5f['sequence_id'].shape[0]
     new_size = current_size + len(data_dict['sequence_id'])
-
-    d_sequence_id.resize(new_size, axis=0) 
-    d_original_sequence.resize(new_size, axis=0)
-    d_input_ids.resize(new_size, axis=0) 
-    d_padding_mask.resize(new_size, axis=0) 
-    if 'target_tokens' in data_dict:
-      d_target_tokens.resize(new_size, axis=0)
-      d_target_pos.resize(new_size, axis=0)
-      d_target_cls.resize(new_size, axis=0)
-
-    debug_log_hdf5(
-      data_dict, 
-      h5f, 
-      d_sequence_id, 
-      d_original_sequence,
-      d_input_ids,
-      d_padding_mask,
-      d_target_tokens,
-      d_target_pos,
-      d_target_cls
-    )
-    
-    for i in range(len(data_dict['sequence_id'])):
-      d_sequence_id[current_size+i] = data_dict['sequence_id'][i]
-      d_original_sequence[current_size+i] = data_dict['original_sequence'][i]
-      d_input_ids[current_size+i] = data_dict['input_ids'][i]
-      d_padding_mask[current_size+i] = data_dict['padding_mask'][i]
-      if 'target_tokens' in data_dict:
-        d_target_tokens[current_size+i] = data_dict['target_tokens'][i]
-        d_target_pos[current_size+i] = data_dict['target_pos'][i]
-        d_target_cls[current_size+i] = data_dict['target_cls'][i]
+    debug_log_hdf5(data_dict, h5f)
+    for key in h5f:
+      h5f[key].resize(new_size, axis=0)
+      h5f[key][current_size:new_size] = data_dict[key]
 
 def generate_encoded_data(
   custom_vocab,
@@ -439,9 +365,7 @@ if __name__ == "__main__":
     write_path=mlm_write_path,
     time_range=get_time_range(cfg),
     do_mlm=cfg['DO_MLM'],
-    needed_ids_path=(
-      cfg['NEEDED_IDS_PATH'] if 'NEEDED_IDS_PATH' in cfg else None
-    ),
-    shuffle=cfg['SHUFFLE'] if 'SHUFFLE' in cfg else False,
-    chunk_size=cfg['CHUNK_SIZE'] if 'CHUNK_SIZE' in cfg else 5000,
+    needed_ids_path=cfg.get('NEEDED_IDS_PATH', None),
+    shuffle=cfg.get('SHUFFLE', False),
+    chunk_size=cfg.get('CHUNK_SIZE', 5000),
   )

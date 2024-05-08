@@ -149,8 +149,9 @@ if __name__ == '__main__':
   
   root_dir = sys.argv[1]
   target_dir = sys.argv[2]
-  if len(sys.argv) > 3:
-    source_extension = '.' + sys.argv[3]
+  sample_size = int(sys.argv[3])
+  if len(sys.argv) > 4:
+    source_extension = '.' + sys.argv[4]
   else:
     source_extension = '.csv'
 
@@ -167,5 +168,5 @@ if __name__ == '__main__':
           os.path.join(target_root, f.split(source_extension)[0]) + 
           target_extension
         )
-        process(source_path, target_path)
+        process(source_path, target_path, sample_size)
         

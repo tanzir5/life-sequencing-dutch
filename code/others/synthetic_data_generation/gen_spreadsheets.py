@@ -75,19 +75,16 @@ def process(source_file_path, target_file_path, n_rows=100):
   logging.debug("Starting with file %s.", source_file_path)
   df, nobs = sample_from_file(source_file_path, n_rows)
 
-  
+  has_pii_cols = [c for c in df.columns if check_column_names([c], PII_COLS)]
+  keep_cols = [c for c in df.columns if c not in has_pii_cols]
+  df = df.loc[:, keep_cols]
   
   summary_dict = {
     'metadata': gen_meta_data(df, source_file_path)
   }
-  has_pii_cols = []
   logging.debug("Processing columns")
   for column in df.columns:
     logging.debug("current column: %s", column)
-    if check_column_names([column], PII_COLS):
-      logging.debug("column has PII")
-      has_pii_cols.append(column)
-      continue
 
     if np.issubdtype(df[column].dtype, np.number):
       summary_dict.update(process_numeric_column(column, df[column]))
@@ -100,6 +97,8 @@ def process(source_file_path, target_file_path, n_rows=100):
       )
   
   summary_dict['has_pii_columns'] = has_pii_cols
+  summary_dict["total_nobs"] = nobs
+  summary_dict["nobs_sumstat"] = n_rows
   logging.debug("Writing output")
   with open(target_file_path, 'w') as f:
     try:

@@ -74,26 +74,8 @@ def process(source_file_path, target_file_path, n_rows=100):
   """
   logging.debug("Starting with file %s.", source_file_path)
   df, nobs = sample_from_file(source_file_path, n_rows)
-  # if source_file_path.endswith('.csv'):
-  #   df, ncols = sample_from_csv(source_file_path, n_rows)
-  #   # count lines; read lines 
-  #   if "SPOLISBUS" in source_file_path:
-  #     df = pd.read_csv(source_file_path, sep=";") 
-  #     logging.info("Drawing subsample")
-  #     df = subsample_from_ids(df, frac=0.01)
-  #   elif "GBAHUISHOUDENS" in source_file_path:
-  #     df = pd.read_csv(source_file_path, sep=",") 
-  #     logging.info("Drawing subsample")
-  #     df = subsample_from_ids(df, frac=0.01)
-  #   else:
-  #     df = pd.read_csv(source_file_path, sep=None, engine="python")
-  # elif source_file_path.endswith('.sav'):
-  #   df, ncols = sample_from_sav(source_file_path, n_rows)
-    # process_sav_file
-    # df, meta = pyreadstat.read_sav(source_file_path)
-  # else:
-    # logging.critical(f'wrong file extension found for {source_file_path}')
-    # exit(0)
+
+  
   
   summary_dict = {
     'metadata': gen_meta_data(df, source_file_path)

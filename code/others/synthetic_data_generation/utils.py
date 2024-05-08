@@ -30,7 +30,12 @@ def subsample_from_ids(df, id_col="RINPERSOON", frac=0.1):
 
 
 def sample_from_file(source_file_path, n_rows):
-  "Sample n_rows from a file. Return subsampled df and the total number of rows in the file"
+  """Sample n_rows from a file. 
+  
+  Returns subsampled df and the total number of rows in the file.
+  If n_rows is None, the whole file is read. For csv, this is using the python
+  engine from pandas, which is slow on large files.
+  """
   if source_file_path.endswith('.sav'):
     df, _ = pyreadstat.read_sav(source_file_path, metadataonly=True)
     columns = df.columns
@@ -38,8 +43,11 @@ def sample_from_file(source_file_path, n_rows):
     df, _ = pyreadstat.read_sav(source_file_path, usecols=[columns[0]])
     nobs = df.shape[0]
 
-    df, _ = pyreadstat.read_sav(source_file_path, row_limit=n_rows)
-
+    if n_rows is not None:
+      df, _ = pyreadstat.read_sav(source_file_path, row_limit=n_rows)
+    else:
+      df, _ = pyreadstat.read_sav(source_file_path)
+       
   elif source_file_path.endswith(".csv"):
     columns = pd.read_csv(source_file_path, 
                           index_col=0, 
@@ -50,7 +58,10 @@ def sample_from_file(source_file_path, n_rows):
     df = pd.read_csv(source_file_path, usecols=[columns[0]], engine="python", sep=None)
     nobs = df.shape[0]
 
-    df = pd.read_csv(source_file_path, nrows=n_rows, engine="python", sep=None)
+    if n_rows is not None:
+      df = pd.read_csv(source_file_path, nrows=n_rows, engine="python", sep=None)
+    else:
+      df = pd.read_csv(source_file_path, engine="python", sep=None)
   else:
     raise ValueError(f"wrong file extension found for {source_file_path}")
 

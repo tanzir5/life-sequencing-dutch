@@ -64,13 +64,13 @@ def get_cov_matrix(df, numeric_columns):
     return cov_matrix
 
 
-def process(source_file_path, target_file_path, n_rows=100):
+def process(source_file_path, target_file_path, n_rows=None):
   """Process a file from source to target
 
   Args:
    source_file_path (str): path to the source file.
    target_file_path (str): path to target file.
-   n_rows (int): Read only as many rows from the file.
+   n_rows (int or None): Read only as many rows from the file. If None, read whole file.
   """
   logging.debug("Starting with file %s.", source_file_path)
   df, nobs = sample_from_file(source_file_path, n_rows)

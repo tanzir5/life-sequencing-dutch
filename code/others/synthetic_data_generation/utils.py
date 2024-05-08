@@ -41,12 +41,16 @@ def sample_from_file(source_file_path, n_rows):
     df, _ = pyreadstat.read_sav(source_file_path, row_limit=n_rows)
 
   elif source_file_path.endswith(".csv"):
-    columns = pd.read_csv(source_file_path, index_col=0, nrows=0).columns.tolist()
+    columns = pd.read_csv(source_file_path, 
+                          index_col=0, 
+                          nrows=0, 
+                          engine="python", 
+                          sep=None).columns.tolist()
 
-    df = pd.read_csv(source_file_path, usecols=[columns[0]])
+    df = pd.read_csv(source_file_path, usecols=[columns[0]], engine="python", sep=None)
     nobs = df.shape[0]
 
-    df = pd.read_csv(source_file_path, nrows=n_rows)
+    df = pd.read_csv(source_file_path, nrows=n_rows, engine="python", sep=None)
   else:
     raise ValueError(f"wrong file extension found for {source_file_path}")
 

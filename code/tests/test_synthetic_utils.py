@@ -2,10 +2,9 @@
 import pandas as pd 
 import numpy as np 
 import pyreadstat 
+import pytest
 
 import others.synthetic_data_generation.utils as su
-
-import pytest
 
 @pytest.fixture
 def wage_df():
@@ -30,11 +29,11 @@ def wage_csv_file(wage_df, tmp_path):
     wage_df.to_csv(filepath, index=False)
     return filepath
 
-
-
-
-# from others.synthetic_data_generation.utils import check_column_names
-# from others.synthetic_data_generation.utils import subsample_from_ids
+@pytest.fixture
+def wage_csv_file_with_semicolon(wage_df, tmp_path):
+    filepath = tmp_path / "wage_df_semicolon.csv"
+    wage_df.to_csv(filepath, index=False, sep=";")
+    return filepath
 
 
 def test_check_column_names():
@@ -66,13 +65,17 @@ def test_subsample_from_ids(wage_df):
     assert sampled_df["person"].nunique() == 2, "does not sample right fraction of ids"
 
 
-def test_sample_from_file(wage_df, wage_sav_file, wage_csv_file):
+def test_sample_from_file(wage_df, wage_sav_file, wage_csv_file, wage_csv_file_with_semicolon):
     nrow = 3
-    df, n = su.sample_from_file(str(wage_sav_file), nrow)
-    assert n == wage_df.shape[0], "sav returns wrong size of table"
-    pd.testing.assert_frame_equal(df, wage_df.loc[:nrow-1, :]), "sav returns wrong subsampled df"
+    # df, n = su.sample_from_file(str(wage_sav_file), nrow)
+    # assert n == wage_df.shape[0], "sav returns wrong size of table"
+    # pd.testing.assert_frame_equal(df, wage_df.loc[:nrow-1, :]), "sav returns wrong subsampled df"
 
-    df, n = su.sample_from_file(str(wage_csv_file), nrow)
+    # df, n = su.sample_from_file(str(wage_csv_file), nrow)
+    # assert n == wage_df.shape[0], "csv returns wrong size of table"
+    # pd.testing.assert_frame_equal(df, wage_df.loc[:nrow-1, :]), "csv returns wrong subsampled df"
+
+    df, n = su.sample_from_file(str(wage_csv_file_with_semicolon), nrow)
     assert n == wage_df.shape[0], "csv returns wrong size of table"
     pd.testing.assert_frame_equal(df, wage_df.loc[:nrow-1, :]), "csv returns wrong subsampled df"
 

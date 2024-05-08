@@ -4,10 +4,10 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --nodes=1
 #SBATCH --time=24:00:00
-#SBATCH --mem=0
+#SBATCH --mem=200G
 #SBATCH -p comp_env
-#SBATCH -e /gpfs/ostor/ossc9424/homedir/logs/net_summary_stdout.txt
-#SBATCH -o /gpfs/ostor/ossc9424/homedir/logs/net_summary_stdout.txt
+#SBATCH -e /gpfs/ostor/ossc9424/homedir/logs/%x.%j.err
+#SBATCH -o /gpfs/ostor/ossc9424/homedir/logs/%x.%j.out
 
 module purge 
 module load 2022 

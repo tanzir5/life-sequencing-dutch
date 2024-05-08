@@ -38,31 +38,31 @@ def process_categorical_column(name, data):
   ret_dict[name]['null_fraction'] = float(data.isna().sum()/len(data))
   return ret_dict
 
-def gen_meta_data(df, source_file_path):
+def get_col_metadata(df, source_file_path):
   metadata = {
     'path': source_file_path,
     'shape': df.shape,
   }
   columns_with_dtypes = {}
-  numeric_data = []
   numeric_columns = []
   for i, column in enumerate(df.columns):
     columns_with_dtypes[column] = str(df.dtypes[i])
     if np.issubdtype(df[column].dtype, np.number):
-      numeric_data.append(df[column].tolist())
       numeric_columns.append(column)
   metadata['columns_with_dtypes'] = columns_with_dtypes
-  if df.shape[0]<=1:
-    return metadata
-  if len(numeric_data) > 0:
-    numeric_data = np.array(numeric_data).T
-    if len(numeric_columns) == 1:
-      metadata['cov_matrix'] = np.reshape(np.cov(numeric_data, rowvar=False), (1,1)).tolist()
-    else:
-      metadata['cov_matrix'] = np.cov(numeric_data, rowvar=False).tolist()
-    metadata['numeric_columns'] = numeric_columns
-    assert(len(metadata['cov_matrix']) == len(numeric_columns))
+  metadata["numeric_columns"] = numeric_columns
   return metadata
+
+def get_cov_matrix(df, numeric_columns):
+    numeric_data = df.loc[:, numeric_columns]
+    if len(numeric_columns) == 1:
+      cov_matrix = np.reshape(np.cov(numeric_data, rowvar=False), (1,1)).tolist()
+    else:
+      cov_matrix = np.cov(numeric_data, rowvar=False).tolist()
+
+    assert len(cov_matrix) == len(numeric_columns)
+    return cov_matrix
+
 
 def process(source_file_path, target_file_path, n_rows=100):
   """Process a file from source to target
@@ -74,14 +74,23 @@ def process(source_file_path, target_file_path, n_rows=100):
   """
   logging.debug("Starting with file %s.", source_file_path)
   df, nobs = sample_from_file(source_file_path, n_rows)
+  
+  summary_dict = {
+    'metadata': get_col_metadata(df, source_file_path)
+  }
+  summary_dict['metadata']["total_nobs"] = nobs
+  summary_dict['metadata']["nobs_sumstat"] = n_rows
 
   has_pii_cols = [c for c in df.columns if check_column_names([c], PII_COLS)]
   keep_cols = [c for c in df.columns if c not in has_pii_cols]
   df = df.loc[:, keep_cols]
-  
-  summary_dict = {
-    'metadata': gen_meta_data(df, source_file_path)
-  }
+  summary_dict['has_pii_columns'] = has_pii_cols
+
+  numeric_columns = summary_dict["metadata"]["numeric_columns"]
+  numeric_columns = [i for i in numeric_columns if i not in has_pii_cols]
+  if df.shape[0] > 1 & len(numeric_columns) > 0:
+    summary_dict["metadata"].update(cov_matrix = get_cov_matrix(df, numeric_columns))
+
   logging.debug("Processing columns")
   for column in df.columns:
     logging.debug("current column: %s", column)
@@ -96,9 +105,6 @@ def process(source_file_path, target_file_path, n_rows=100):
         f"dtype of {column} is {df[column].dtype}"
       )
   
-  summary_dict['has_pii_columns'] = has_pii_cols
-  summary_dict["total_nobs"] = nobs
-  summary_dict["nobs_sumstat"] = n_rows
   logging.debug("Writing output")
   with open(target_file_path, 'w') as f:
     try:

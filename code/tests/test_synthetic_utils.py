@@ -67,13 +67,13 @@ def test_subsample_from_ids(wage_df):
 
 def test_sample_from_file(wage_df, wage_sav_file, wage_csv_file, wage_csv_file_with_semicolon):
     nrow = 3
-    # df, n = su.sample_from_file(str(wage_sav_file), nrow)
-    # assert n == wage_df.shape[0], "sav returns wrong size of table"
-    # pd.testing.assert_frame_equal(df, wage_df.loc[:nrow-1, :]), "sav returns wrong subsampled df"
+    df, n = su.sample_from_file(str(wage_sav_file), nrow)
+    assert n == wage_df.shape[0], "sav returns wrong size of table"
+    pd.testing.assert_frame_equal(df, wage_df.loc[:nrow-1, :]), "sav returns wrong subsampled df"
 
-    # df, n = su.sample_from_file(str(wage_csv_file), nrow)
-    # assert n == wage_df.shape[0], "csv returns wrong size of table"
-    # pd.testing.assert_frame_equal(df, wage_df.loc[:nrow-1, :]), "csv returns wrong subsampled df"
+    df, n = su.sample_from_file(str(wage_csv_file), nrow)
+    assert n == wage_df.shape[0], "csv returns wrong size of table"
+    pd.testing.assert_frame_equal(df, wage_df.loc[:nrow-1, :]), "csv returns wrong subsampled df"
 
     df, n = su.sample_from_file(str(wage_csv_file_with_semicolon), nrow)
     assert n == wage_df.shape[0], "csv returns wrong size of table"

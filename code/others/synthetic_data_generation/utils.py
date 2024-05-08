@@ -49,20 +49,28 @@ def sample_from_file(source_file_path, n_rows):
       df, _ = pyreadstat.read_sav(source_file_path)
        
   elif source_file_path.endswith(".csv"):
+    sep = None
+    if "SPOLISBUS" in source_file_path:
+      sep = ";"
+    elif "GBAHUISHOUDENS" in source_file_path:
+      sep = ","
+    engine = "python" if sep is None else "c"
+    
     columns = pd.read_csv(source_file_path, 
                           index_col=0, 
                           nrows=0, 
-                          engine="python", 
-                          sep=None).columns.tolist()
+                          sep=sep,
+                          engine=engine).columns.tolist()
 
-    df = pd.read_csv(source_file_path, usecols=[columns[0]], engine="python", sep=None)
+    df = pd.read_csv(source_file_path, usecols=[columns[0]], engine=engine, sep=sep)
     nobs = df.shape[0]
 
     if n_rows is not None:
-      df = pd.read_csv(source_file_path, nrows=n_rows, engine="python", sep=None)
+      df = pd.read_csv(source_file_path, nrows=n_rows, engine=engine, sep=sep)
     else:
-      df = pd.read_csv(source_file_path, engine="python", sep=None)
+      df = pd.read_csv(source_file_path, engine=engine, sep=sep)
   else:
     raise ValueError(f"wrong file extension found for {source_file_path}")
 
   return df, nobs
+

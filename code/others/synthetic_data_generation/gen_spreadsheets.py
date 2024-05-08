@@ -5,9 +5,9 @@ import numpy as np
 import json
 import logging 
 import pyreadstat
-from utils import check_column_names, subsample_from_ids
+from utils import check_column_names, subsample_from_ids, sample_from_file
 
-PII_COLS = ['RINPERSOON', 'RINADRES', 'BEID', 'BRIN']
+PII_COLS = ['RINPERSOON', 'RINADRES', 'BEID', 'BRIN', 'HUISHOUDNR', 'REFPERSOONHH']
 
 
 def process_numeric_column(name, data):
@@ -64,24 +64,36 @@ def gen_meta_data(df, source_file_path):
     assert(len(metadata['cov_matrix']) == len(numeric_columns))
   return metadata
 
-def process(source_file_path, target_file_path):
+def process(source_file_path, target_file_path, n_rows=100):
+  """Process a file from source to target
+
+  Args:
+   source_file_path (str): path to the source file.
+   target_file_path (str): path to target file.
+   n_rows (int): Read only as many rows from the file.
+  """
   logging.debug("Starting with file %s.", source_file_path)
-  if source_file_path.endswith('.csv'):
-    if "SPOLISBUS" in source_file_path:
-      df = pd.read_csv(source_file_path, sep=";") 
-      logging.info("Drawing subsample")
-      df = subsample_from_ids(df, frac=0.01)
-    elif "GBAHUISHOUDENS" in source_file_path:
-      df = pd.read_csv(source_file_path, sep=",") 
-      logging.info("Drawing subsample")
-      df = subsample_from_ids(df, frac=0.01)
-    else:
-      df = pd.read_csv(source_file_path, sep=None, engine="python")
-  elif source_file_path.endswith('.sav'):
-    df, meta = pyreadstat.read_sav(source_file_path)
-  else:
-    logging.critical(f'wrong file extension found for {source_file_path}')
-    exit(0)
+  df, nobs = sample_from_file(source_file_path, n_rows)
+  # if source_file_path.endswith('.csv'):
+  #   df, ncols = sample_from_csv(source_file_path, n_rows)
+  #   # count lines; read lines 
+  #   if "SPOLISBUS" in source_file_path:
+  #     df = pd.read_csv(source_file_path, sep=";") 
+  #     logging.info("Drawing subsample")
+  #     df = subsample_from_ids(df, frac=0.01)
+  #   elif "GBAHUISHOUDENS" in source_file_path:
+  #     df = pd.read_csv(source_file_path, sep=",") 
+  #     logging.info("Drawing subsample")
+  #     df = subsample_from_ids(df, frac=0.01)
+  #   else:
+  #     df = pd.read_csv(source_file_path, sep=None, engine="python")
+  # elif source_file_path.endswith('.sav'):
+  #   df, ncols = sample_from_sav(source_file_path, n_rows)
+    # process_sav_file
+    # df, meta = pyreadstat.read_sav(source_file_path)
+  # else:
+    # logging.critical(f'wrong file extension found for {source_file_path}')
+    # exit(0)
   
   summary_dict = {
     'metadata': gen_meta_data(df, source_file_path)
@@ -115,6 +127,10 @@ def process(source_file_path, target_file_path):
         f"{target_file_path} could not be jsonified", 
         exc_info=True,
       )
+
+
+
+
 
 def create_dir(path):
   pass

@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #SBATCH --job-name=pipeline
-#SBATCH --ntasks 128
+#SBATCH --ntasks 72
 #SBATCH --nodes=1
 #SBATCH --time=12:00:00
 #SBATCH --mem=900G

@@ -147,7 +147,11 @@ def update_data_dict(data_dict, output, do_mlm):
     data_dict['target_cls'].append(output.target_cls)
 
 def convert_to_numpy(data_dict):
-  context_len = data_dict['original_sequence'].shape[1]
+  # check if data_dict is empty
+  if len(data_dict) == 0:
+    return
+  context_len = len(data_dict['original_sequence'][0])
+
   for key, value in data_dict.items():
     if key == 'sequence_id':
       continue
@@ -184,7 +188,7 @@ def encode_documents(docs, needed_ids, do_mlm, mlm):
     if output is None:
       continue
     update_data_dict(data_dict, output, do_mlm)
-  
+    
   convert_to_numpy(data_dict)
   return data_dict
 
@@ -242,6 +246,8 @@ def debug_log_hdf5(data_dict, h5f):
 
 def write_to_hdf5(write_path, data_dict):
   """Write processed data to an HDF5 file."""
+  if len(data_dict) == 0:
+    return
   with h5py.File(write_path, 'a') as h5f:
     if 'sequence_id' not in h5f:
       init_hdf5_datasets(h5f, data_dict)
@@ -285,6 +291,7 @@ def generate_encoded_data(
     mlm.set_time_range(time_range)
   
   num_processes = max(1, mp.cpu_count()-5)
+  logging.info(f"# of processes = {num_processes}")
   chunks = read_jsonl_file_in_chunks(
     sequence_path, 
     chunk_size, 
@@ -365,5 +372,5 @@ if __name__ == "__main__":
     do_mlm=cfg['DO_MLM'],
     needed_ids_path=cfg.get('NEEDED_IDS_PATH', None),
     shuffle=cfg.get('SHUFFLE', False),
-    chunk_size=cfg.get('CHUNK_SIZE', 5000),
+    chunk_size=cfg.get('CHUNK_SIZE', 500),
   )

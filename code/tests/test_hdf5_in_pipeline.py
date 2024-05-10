@@ -2,6 +2,7 @@ import os
 import sys
 import random, string 
 import numpy as np
+import resource
 # Get the current working directory
 current_directory = os.getcwd()
 sys.path.append('/Users/tanzir5/Documents/GitHub/life-sequencing-dutch/code/llm')
@@ -16,7 +17,7 @@ def get_data_dict():
   VOCAB_SIZE = 10000
   CONTEXT_LEN = 512
   random_positions = np.random.randint(1, CONTEXT_LEN, size=SIZE)
-  padding_mask = np.where(np.arange(CONTEXT_LEN) < random_positions[:, None], 0, 1)
+  padding_mask = np.where(np.arange(CONTEXT_LEN) < random_positions[:, None], 0, 1).tolist()
   random_positions = np.random.randint(1, CONTEXT_LEN, size=SIZE)
   target_tokens = [np.random.randint(0, VOCAB_SIZE, size=random_positions[i]) for i in range(SIZE)]
   target_pos = [np.random.randint(1, CONTEXT_LEN, size=random_positions[i]) for i in range(SIZE)]
@@ -29,8 +30,8 @@ def get_data_dict():
         )
       ) for _ in range(SIZE)
     ],
-    'original_sequence': np.random.randint(0, VOCAB_SIZE, (SIZE, CONTEXT_LEN)),
-    'input_ids': np.random.randint(0, VOCAB_SIZE, (SIZE, 4, CONTEXT_LEN)),
+    'original_sequence': np.random.randint(0, VOCAB_SIZE, (SIZE, CONTEXT_LEN)).tolist(),
+    'input_ids': np.random.randint(0, VOCAB_SIZE, (SIZE, 4, CONTEXT_LEN)).tolist(),
     'padding_mask': padding_mask,
     'target_tokens': target_tokens,
     'target_pos': target_pos,
@@ -40,12 +41,21 @@ def get_data_dict():
 
 def test_write_to_hdf5():
   write_path = 'test.h5'
-  for _ in range(3):
-    data_dict = get_data_dict()
-    convert_to_numpy(data_dict)
-    write_to_hdf5(write_path, data_dict)
+  #for _ in range(3):
+  data_dict = get_data_dict()
+  convert_to_numpy(data_dict)
+  write_to_hdf5(write_path, data_dict)
+
+def get_peak_memory():
+    # Get peak memory usage (in kilobytes) on Unix systems
+    usage = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss/(1024*1024*1024)
+    return usage
 
 if __name__ == '__main__':
-  test_write_to_hdf5()
+  print(f"Peak Memory Usage: {get_peak_memory()} GB")
 
   test_write_to_hdf5()
+  print(f"Peak Memory Usage: {get_peak_memory()} GB")
+
+  test_write_to_hdf5()
+  print(f"Peak Memory Usage: {get_peak_memory()} GB")

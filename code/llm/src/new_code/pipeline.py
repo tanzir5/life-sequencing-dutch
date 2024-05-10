@@ -50,13 +50,15 @@ def read_jsonl_file_in_chunks(file_path, chunk_size, needed_ids, do_mlm):
   """Generator that yields chunks of JSON objects from a JSONL file."""
   with open(file_path, 'r') as file:
     chunk = []
+    counter = 0 
     for line in file:
       chunk.append(line)
       if len(chunk) == chunk_size:
-        yield chunk
+        yield chunk, counter
         chunk = []
+        counter += 1
     if chunk:  # Yield any remaining JSON objects
-        yield chunk
+        yield chunk, counter
 
 def get_raw_file_name(path):
   return path.split("/")[-1].split(".")[0]
@@ -162,7 +164,8 @@ def convert_to_numpy(data_dict):
       value = np_value
     data_dict[key] = np.array(value)
 
-def encode_documents(docs, needed_ids, do_mlm, mlm):
+def encode_documents(docs_with_counter, write_path_prefix, needed_ids, do_mlm, mlm):
+  docs, counter = docs_with_counter
   data_dict = init_data_dict(do_mlm)
   for document in docs:
     person_dict = load_json_obj(document)
@@ -190,7 +193,8 @@ def encode_documents(docs, needed_ids, do_mlm, mlm):
     update_data_dict(data_dict, output, do_mlm)
     
   convert_to_numpy(data_dict)
-  return data_dict
+  write_path = f"{write_path_prefix}_{counter}.h5" 
+  write_to_hdf5(write_path, data_dict)
 
 def init_hdf5_datasets(h5f, data_dict):
   """Initialize HDF5 datasets when they do not exist."""
@@ -262,7 +266,7 @@ def write_to_hdf5(write_path, data_dict):
 def generate_encoded_data(
   custom_vocab,
   sequence_path,
-  write_path,
+  write_path_prefix,
   time_range=None,
   do_mlm=True,
   needed_ids_path=None,
@@ -298,19 +302,18 @@ def generate_encoded_data(
     needed_ids,
     do_mlm
   )
-
   progress_bar = tqdm(total=total_docs, desc="Encoding documents", unit="doc")
 
   logging.info("Starting multiprocessing")
   helper_encode_documents = partial(
     encode_documents, 
+    write_path_prefix=write_path_prefix,
     needed_ids=needed_ids, 
     do_mlm=do_mlm,
     mlm=mlm,
   )
   with Pool(processes=num_processes) as pool:
-    for data_dict_result in pool.imap_unordered(helper_encode_documents, chunks):
-      write_to_hdf5(write_path, data_dict_result)
+    for _ in pool.imap_unordered(helper_encode_documents, chunks):
       progress_bar.update(chunk_size)
   progress_bar.close()
   logging.debug("Finished generate_encoded_data function")
@@ -367,7 +370,7 @@ if __name__ == "__main__":
   generate_encoded_data(
     custom_vocab=custom_vocab, 
     sequence_path=sequence_path, 
-    write_path=mlm_write_path,
+    write_path_prefix=mlm_write_path,
     time_range=get_time_range(cfg),
     do_mlm=cfg['DO_MLM'],
     needed_ids_path=cfg.get('NEEDED_IDS_PATH', None),

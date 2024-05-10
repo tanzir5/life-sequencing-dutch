@@ -29,12 +29,14 @@ def process_categorical_column(name, data):
   ret_dict = {
     name: {}
   }
-  most_frequent = data.value_counts().head(200).to_dict()
+  most_frequent = data.value_counts().head(5).to_dict()
+  for _ in range(len(most_frequent), 5):
+    most_frequent['EMPTY'] = 0
   total = 0
-  for category in most_frequent:
-    ret_dict[name][category] = most_frequent[category]/len(data)
+  for i, category in enumerate(most_frequent):
+    ret_dict[name][f"category_top_{i}"] = f"{category}--{most_frequent[category]/len(data)}"
     total += most_frequent[category]
-  ret_dict['_others'] = (len(data) - total)/len(data) 
+  ret_dict[name]['_others'] = (len(data) - total)/len(data) 
   ret_dict[name]['null_fraction'] = float(data.isna().sum()/len(data))
   return ret_dict
 
@@ -88,7 +90,7 @@ def process(source_file_path, target_file_path, n_rows=None):
 
   numeric_columns = summary_dict["metadata"]["numeric_columns"]
   numeric_columns = [i for i in numeric_columns if i not in has_pii_cols]
-  if df.shape[0] > 1 & len(numeric_columns) > 0:
+  if df.shape[0] > 1 and len(numeric_columns) > 0:
     summary_dict["metadata"].update(cov_matrix = get_cov_matrix(df, numeric_columns))
 
   logging.debug("Processing columns")
@@ -116,18 +118,13 @@ def process(source_file_path, target_file_path, n_rows=None):
       )
 
 
-
-
-
 def create_dir(path):
-  pass
   if os.path.exists(path):
     return
   os.mkdir(path)
 
 
 if __name__ == '__main__':
-
   logging.basicConfig(
     format='%(asctime)s %(name)s %(levelname)s: %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S',
@@ -136,7 +133,10 @@ if __name__ == '__main__':
   
   root_dir = sys.argv[1]
   target_dir = sys.argv[2]
-  sample_size = int(sys.argv[3])
+  if sys.argv[3] != 'None':
+    sample_size = int(sys.argv[3])
+  else:
+    sample_size = None
   if len(sys.argv) > 4:
     source_extension = '.' + sys.argv[4]
   else:

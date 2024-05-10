@@ -33,8 +33,8 @@ def sample_from_file(source_file_path, n_rows):
   """Sample n_rows from a file. 
   
   Returns subsampled df and the total number of rows in the file.
-  If n_rows is None, the whole file is read. For csv, this is using the python
-  engine from pandas, which is slow on large files.
+  If n_rows is None, the whole file is read. For csvs related to SPOLISBUS and GBAHUISHOUDENS,
+  this is using the python engine from pandas, which is slow on large files.
   """
   if source_file_path.endswith('.sav'):
     df, _ = pyreadstat.read_sav(source_file_path, metadataonly=True)

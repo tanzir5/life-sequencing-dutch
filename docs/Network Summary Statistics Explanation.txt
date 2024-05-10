@@ -1,0 +1,27 @@
+﻿Network Summary Statistics Explanation
+(Updated May 10th, 2024)
+
+
+This documentation is concerning the creation and export of the file ‘network_summary_statistics.csv’. This file contains summary statistics for each of the 5 layers of the whole population social network data. (https://academic.oup.com/esr/article/39/1/145/6605763)
+
+
+This file is created by the script ‘get_network_summary_statistics.py’. The outline of that script is as follows:
+
+
+Adjacency dictionaries representing each of the 5 layer types are loaded into memory. The layer types are: family, household, neighbor, colleague, and education. These adjacency dictionaries are indexed by RINPERSOON, and the values are unsorted lists of connections. They are intermediate data files processed from the raw edge lists found at the following locations.
+
+
+G:/Bevolking/FAMILIENETWERKTAB
+G:/Bevolking/HUISGENOTENNETWERKTAB
+G:/Bevolking/BURENNETWERKTAB
+G:/Bevolking/COLLEGANETWERKTAB
+G:/Bevolking/KLASGENOTENNETWERKTAB
+
+
+We use inclusion in a single large connected component of the family network as our cohort criteria, leading to an N of roughly ~15 million (actual number reported in file). Then for each layer we find the following aggregate values for node degree - mean, median, standard deviation, 10th percentile, 90th percentile, and percent of users from the total set with at least 1 connection on that layer. These leads to (5 layers) * (6 variables) = 30 values.
+
+
+We also look at the intersection between layers (i.e. what proportion of family members are also in your household). For each possible unordered layer pair we compute the following values about these intersections: mean, median, standard deviation, 10th percentile, 90th percentile, and percent of users with at least 1 intersection between these layers. This leads to (10 unique unordered layer pairs) * (6 variables) = 60 values. 
+
+
+Finally, the relevant N (number of people used for calculations) is included for each row. All calculations have the same N, because the same criteria (inclusion in the main family layer component) is used for all cases. The number of nonzero N per row may be different, but all of our aggregation calculations include the zero values as well.

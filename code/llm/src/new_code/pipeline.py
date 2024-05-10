@@ -149,7 +149,7 @@ def update_data_dict(data_dict, output, do_mlm):
 def convert_to_numpy(data_dict):
   # check if data_dict is empty
   if len(data_dict) == 0:
-    return
+    return 
   context_len = len(data_dict['original_sequence'][0])
 
   for key, value in data_dict.items():

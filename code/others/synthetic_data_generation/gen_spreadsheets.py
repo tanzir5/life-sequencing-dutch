@@ -7,7 +7,7 @@ import logging
 import pyreadstat
 from utils import check_column_names, subsample_from_ids, sample_from_file
 
-PII_COLS = ['RINPERSOON', 'RINADRES', 'BEID', 'BRIN', 'HUISHOUDNR', 'REFPERSOONHH']
+PII_COLS = ['RINPERSOON', 'RINADRES', 'BEID', 'BRIN', 'HUISHOUDNR', 'REFPERSOONHH', 'IKVD', 'SCHEIDINGNUMMER']
 
 
 def process_numeric_column(name, data):

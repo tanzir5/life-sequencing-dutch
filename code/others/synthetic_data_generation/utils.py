@@ -72,7 +72,8 @@ def sample_from_file(source_file_path, n_rows):
   else:
     raise ValueError(f"wrong file extension found for {source_file_path}")
   
-  df.drop(columns=["Unnamed: 0"], inplace=True)
+  if "Unnamed: 0" in df.columns:
+    df.drop(columns=["Unnamed: 0"], inplace=True)
 
   return df, nobs
 

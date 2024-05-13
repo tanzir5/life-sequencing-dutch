@@ -8,8 +8,9 @@ import pyreadstat
 from utils import check_column_names, sample_from_file
 
 PII_COLS = ['RINPERSOON', 'RINADRES', 'BEID', 'BRIN', 'HUISHOUDNR', 
-            'REFPERSOONHH', 'IKVD', 'SCHEIDINGNUMMER']
+            'REFPERSOONHH', 'IKVID', 'SCHEIDINGNUMMER', '_crypt']
 MIN_NOBS = 10
+NA_ID_INPA = 9999999999.0
 
 
 def process_numeric_column(name, data):
@@ -93,6 +94,12 @@ def process(source_file_path, target_file_path, n_rows=None):
 
   numeric_columns = summary_dict["metadata"]["numeric_columns"]
   numeric_columns = [i for i in numeric_columns if i not in has_pii_cols]
+
+  if "INPATAB" in source_file_path and len(numeric_columns) > 0:
+    for col in numeric_columns: 
+      df.loc[df[col] == NA_ID_INPA, col] = np.nan 
+
+
   if df.shape[0] > 1 and len(numeric_columns) > 0:
     summary_dict["metadata"].update(cov_matrix = get_cov_matrix(df, numeric_columns))
 

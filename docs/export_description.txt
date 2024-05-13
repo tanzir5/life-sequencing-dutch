@@ -32,5 +32,5 @@ xv) _others: total relative frequency of all other categories
 
 x_covariance.csv will be only created for spreadsheets that has at least one numeric variable. It will be a (n+1)x(n+1) table where n = # of numeric variables the original spreadsheet has. The first row and column will contain names of the numeric variables. The cell in the i-th row and the j-th column would denote the covariance between the i-th and the j-th numeric variable. This is a symmetric matrix. 
 
-For all statistics, we use all the rows (typically in the millions for all of them), or we sample with at least 1000 data points. For every file x, the number of rows used can be found at nobs_sumstat of x_meta.txt or if it is empty/None, then at total_nobs of x_meta.txt 
+For all statistics, we use all the rows (typically in the millions for all of them), or we sample with at least 1000 data points. For every file x, the number of rows used can be found at nobs_sumstat of x_meta.txt or if it is empty/None, then at total_nobs of x_meta.txt. If nobs_sumstat is not None but not a binding limit, all rows are used. 
 

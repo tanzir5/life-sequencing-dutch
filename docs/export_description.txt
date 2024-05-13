@@ -11,7 +11,7 @@ For example, a spreadsheet named "x.csv" will have the following corresponding f
 x_meta.txt will contain a dictionary with the following keys: 
 i) path: denoting the path of the original file in OSSC
 ii) shape: the number of rows and the number of columns in the original file
-iii) columns_with_dtypes: a list of pairs where the 1st member is a column name and the 2nd member is the data type (numeric, categorical, etc)
+iii) columns_with_dtypes: a list of pairs where the 1st member is a column name and the 2nd member is the data type (numeric, categorical, etc). Columns with type "object" are columns with string values and thus categorical.
 iv) total_nobs: # of rows in the original file (this is repeated in shape too)
 v) nobs_sumstat: # of rows we sampled for creating the summary statistics for this spreadsheet. For extremely huge spreadsheets, we sampled a moderate number of rows and created the summary statistics. 
 vi) has_pii_columns: the PII columns that the original file had and we did not include in x_columns.csv
@@ -26,7 +26,7 @@ vi) 90th_percentile: ^ same for the 90th percentile
 vii) q1: ^ same for the 25th percentile
 viii) q3: ^ same for the 75th percentile
 ix) null_fraction: fraction of rows that were empty
-x) category_top_0: for categorical variables, the name of the category with the highest frequency and the relative frequency of that category within this dataset.
+x) category_top_0: for categorical variables, the name of the category with the highest frequency and the relative frequency of that category within this dataset. The data are recorded as "V--p", wher "V" is the value of the categorical column and "p" is the percent of records with this value. 
 xi - xiv) category_top_1	category_top_2	category_top_3	category_top_4: ^ same for the the next top 4 categories.
 xv) _others: total relative frequency of all other categories
 

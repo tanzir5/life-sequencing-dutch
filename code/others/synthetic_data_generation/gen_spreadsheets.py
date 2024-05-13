@@ -7,7 +7,9 @@ import logging
 import pyreadstat
 from utils import check_column_names, sample_from_file
 
-PII_COLS = ['RINPERSOON', 'RINADRES', 'BEID', 'BRIN', 'HUISHOUDNR', 'REFPERSOONHH', 'IKVD', 'SCHEIDINGNUMMER']
+PII_COLS = ['RINPERSOON', 'RINADRES', 'BEID', 'BRIN', 'HUISHOUDNR', 
+            'REFPERSOONHH', 'IKVD', 'SCHEIDINGNUMMER']
+MIN_NOBS = 10
 
 
 def process_numeric_column(name, data):
@@ -34,8 +36,9 @@ def process_categorical_column(name, data):
     most_frequent['EMPTY'] = 0
   total = 0
   for i, category in enumerate(most_frequent):
-    ret_dict[name][f"category_top_{i}"] = f"{category}--{most_frequent[category]/len(data)}"
-    total += most_frequent[category]
+    if most_frequent[category] >= MIN_NOBS:
+      ret_dict[name][f"category_top_{i}"] = f"{category}--{most_frequent[category]/len(data)}"
+      total += most_frequent[category]
   ret_dict[name]['_others'] = (len(data) - total)/len(data) 
   ret_dict[name]['null_fraction'] = float(data.isna().sum()/len(data))
   return ret_dict

@@ -272,6 +272,7 @@ def generate_encoded_data(
   needed_ids_path=None,
   shuffle=False,
   chunk_size=5000,
+  parallel=True
 ):
   logging.debug("Starting generate_encoded_data function")
   if needed_ids_path:
@@ -304,17 +305,23 @@ def generate_encoded_data(
   )
   progress_bar = tqdm(total=total_docs, desc="Encoding documents", unit="doc")
 
-  logging.info("Starting multiprocessing")
-  helper_encode_documents = partial(
-    encode_documents, 
-    write_path_prefix=write_path_prefix,
-    needed_ids=needed_ids, 
-    do_mlm=do_mlm,
-    mlm=mlm,
-  )
-  with Pool(processes=num_processes) as pool:
-    for _ in pool.imap_unordered(helper_encode_documents, chunks):
+  if parallel:
+    logging.info("Starting multiprocessing")
+    helper_encode_documents = partial(
+      encode_documents, 
+      write_path_prefix=write_path_prefix,
+      needed_ids=needed_ids, 
+      do_mlm=do_mlm,
+      mlm=mlm,
+    )
+    with Pool(processes=num_processes) as pool:
+      for _ in pool.imap_unordered(helper_encode_documents, chunks):
+        progress_bar.update(chunk_size)
+  else: 
+    for chunk in chunks:
+      helper_encode_documents(chunk)
       progress_bar.update(chunk_size)
+  
   progress_bar.close()
   logging.debug("Finished generate_encoded_data function")
 
@@ -376,4 +383,5 @@ if __name__ == "__main__":
     needed_ids_path=cfg.get('NEEDED_IDS_PATH', None),
     shuffle=cfg.get('SHUFFLE', False),
     chunk_size=cfg.get('CHUNK_SIZE', 500),
+    parallel=cfg.get("PARALLEL", True)
   )

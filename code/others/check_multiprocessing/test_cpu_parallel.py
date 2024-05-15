@@ -6,7 +6,7 @@ def worker_func(i):
     proc_id = os.getpid()
     print(f"starting job {i} with proc_id {proc_id}", flush=True)
     sched_affinity = os.sched_getaffinity(proc_id)
-    print(f"CPUs for job {i} is: {sched_affinity}")
+    print(f"CPUs for job {i} is: {sched_affinity}", flush=True)
     time.sleep(2)
     print(f"job {i} is finished, returning to main", flush=True)
 

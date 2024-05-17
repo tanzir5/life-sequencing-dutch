@@ -6,8 +6,8 @@
 #SBATCH --time=24:00:00
 #SBATCH --mem=0
 #SBATCH -p work_env
-#SBATCH -e /gpfs/ostor/ossc9424/homedir/Tanzir/LifeToVec_Nov/projects/synthetic/logs/generate_stderr.txt
-#SBATCH -o /gpfs/ostor/ossc9424/homedir/Tanzir/LifeToVec_Nov/projects/synthetic/logs/generate_stdout.txt
+#SBATCH -e /gpfs/ostor/ossc9424/homedir/Tanzir/LifeToVec_Nov/projects/synthetic/logs/%x.%j.err
+#SBATCH -o /gpfs/ostor/ossc9424/homedir/Tanzir/LifeToVec_Nov/projects/synthetic/logs/%x.%j.out
 
 module purge 
 module load 2022 
@@ -21,8 +21,10 @@ echo "job started"
 cd /gpfs/ostor/ossc9424/homedir/synthetic_data/
 
 date
-time python gen_spreadsheets.py "$DATAPATH/dutch_real/raw_data/" "$DATAPATH/synthetic/raw_data/"
-time python gen_spreadsheets.py "$DATAPATH/dutch_real/data/" "$DATAPATH/synthetic/data/"
-time python gen_spreadsheets.py "$DATAPATH/dutch_real/data/" "$DATAPATH/synthetic/data/" csv
+time python gen_spreadsheets.py "$DATAPATH/dutch_real/raw_data/" "$DATAPATH/synthetic/raw_data/" None 
+time python gen_spreadsheets.py "$DATAPATH/dutch_real/data/" "$DATAPATH/synthetic/data/" None 
+time python gen_spreadsheets.py "$DATAPATH/dutch_real/data/" "$DATAPATH/synthetic/data/" None csv
+
+python gen_csv_from_jsons.py "$DATAPATH/synthetic/data" "$DATAPATH/synthetic/data-final/"
 
 echo "job ended successfully" 

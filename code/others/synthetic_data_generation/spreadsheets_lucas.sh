@@ -6,8 +6,8 @@
 #SBATCH --time=24:00:00
 #SBATCH --mem=0
 #SBATCH -p work_env
-#SBATCH -e /gpfs/ostor/ossc9424/homedir/synthetic_data/logs/generate_lucas_stderr.txt
-#SBATCH -o /gpfs/ostor/ossc9424/homedir/synthetic_data/logs/generate_lucas_stdout.txt
+#SBATCH -e /gpfs/ostor/ossc9424/homedir/synthetic_data/logs/%x.%j.err
+#SBATCH -o /gpfs/ostor/ossc9424/homedir/synthetic_data/logs/%x.%j.out
 
 module purge 
 module load 2022 
@@ -23,7 +23,9 @@ DATAPATH="/gpfs/ostor/ossc9424/homedir/"
 cd /gpfs/ostor/ossc9424/homedir/synthetic_data/
 
 date
-time python gen_spreadsheets.py "$DATAPATH/cbs_data/real/" "$DATAPATH/cbs_data/synthetic/" csv
-time python gen_spreadsheets.py "$DATAPATH/cbs_data/real/" "$DATAPATH/cbs_data/synthetic/" sav
+time python gen_spreadsheets.py "$DATAPATH/cbs_data/real/" "$DATAPATH/cbs_data/synthetic/" "100000" csv
+time python gen_spreadsheets.py "$DATAPATH/cbs_data/real/" "$DATAPATH/cbs_data/synthetic/" "100000" sav
+
+python gen_csv_from_jsons.py "$DATAPATH/cbs_data/synthetic/json" "$DATAPATH/cbs_data/synthetic/final/"
 
 echo "job ended successfully" 

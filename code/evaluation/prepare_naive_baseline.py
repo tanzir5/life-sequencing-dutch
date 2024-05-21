@@ -55,14 +55,30 @@ print("Normalizing Municipality...", flush=True)
 norm_municipality = list(np.array(birth_municipality_list) / np.max(birth_municipality_list))
 print(norm_municipality[:20], flush=True)
 
+# add education 
+df_educ = pd.read_csv("~/Tanzir/LifeToVec_Nov/projects/dutch_real/raw_data/education_info_good_format.csv",
+                      usecols=["RINPERSOON", "educSim"],
+                      dtype={"RINPERSOON": int, "educSim": int} 
+                      )
+mask = (df_educ["RINPERSOON"].isin(full_user_set) & 
+        df_educ["educSim"] != -1 # TODO: what to do with the educSim values of -1?
+        )
+df_educ = df_educ.loc[mask, :]
+
 birth_year_dict = {}
 gender_dict = {}
 birth_municipality_dict = {}
+educ_dict = {}
 
 for i, person in enumerate(person_list):
     birth_year_dict[person] = norm_birth_years[i]
     gender_dict[person] = norm_gender[i]
     birth_municipality_dict[person] = norm_municipality[i]
+
+for record in df_educ.to_records(index=False):
+    person, educ = record 
+    educ_dict[person] = educ
+
         
 with open("/gpfs/ostor/ossc9424/homedir/Life_Course_Evaluation/data/processed/person_birth_year.pkl", 'wb') as pkl_file:
     pickle.dump(birth_year_dict, pkl_file)
@@ -72,3 +88,6 @@ with open("/gpfs/ostor/ossc9424/homedir/Life_Course_Evaluation/data/processed/pe
     
 with open("/gpfs/ostor/ossc9424/homedir/Life_Course_Evaluation/data/processed/person_birth_municipality.pkl", 'wb') as pkl_file:
     pickle.dump(birth_municipality_dict, pkl_file)
+
+with open("/gpfs/ostor/ossc9424/homedir/Life_Course_Evaluation/data/processed/person_educ.pkl", 'wb') as pkl_file:
+    pickle.dump(educ_dict, pkl_file)

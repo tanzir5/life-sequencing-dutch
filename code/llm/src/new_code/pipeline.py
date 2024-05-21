@@ -305,15 +305,16 @@ def generate_encoded_data(
   )
   progress_bar = tqdm(total=total_docs, desc="Encoding documents", unit="doc")
 
+  helper_encode_documents = partial(
+    encode_documents, 
+    write_path_prefix=write_path_prefix,
+    needed_ids=needed_ids, 
+    do_mlm=do_mlm,
+    mlm=mlm,
+  )
+
   if parallel:
     logging.info("Starting multiprocessing")
-    helper_encode_documents = partial(
-      encode_documents, 
-      write_path_prefix=write_path_prefix,
-      needed_ids=needed_ids, 
-      do_mlm=do_mlm,
-      mlm=mlm,
-    )
     with Pool(processes=num_processes) as pool:
       for _ in pool.imap_unordered(helper_encode_documents, chunks):
         progress_bar.update(chunk_size)

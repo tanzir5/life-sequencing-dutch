@@ -24,6 +24,7 @@ As per ticket SD-74551 on the SURF service desk,
 - there should be now a default ACL in which everyone in the group ossc9424 also has read, write, execute permission. 
 - user ossc9424fhvo is the owner of all files that were previously owned by ossc9424
 - the directories `~/Dakota_network`, `~/Tanzir/`, and `~/Life_Course_Evaluation` still are chowned by their respective creators. But `getfacl` returns either `group:rwx` or `group:ossc9424:rwx`, which I understand gives rwx access to the ossc9424 group in both cases.
+- there are still some directories for which the group lacks write access, for instance `Network_Embeddings`. 
 
 
 ## Filesystem

@@ -9,5 +9,6 @@
   "TIME_KEY": "daysSinceFirstEvent",
   "TIME_RANGE_END": 16438,
   "SHUFFLE": true,
-  "PARALLEL": true
+  "PARALLEL": true,
+  "CHUNK_SIZE": 10000
 }

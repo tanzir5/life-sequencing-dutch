@@ -12,6 +12,9 @@
 echo "job started"
 
 date
-time python pretrain.py projects/dutch_real/pretrain_cfg.json
+time python pretrain.py projects/dutch_real/pretrain_cfg_small.json
+#time python pretrain.py projects/dutch_real/pretrain_cfg_medium.json
+#time python pretrain.py projects/dutch_real/pretrain_cfg_medium2x.json
+#time python pretrain.py projects/dutch_real/pretrain_cfg_large.json
 
 echo "job ended successfully"

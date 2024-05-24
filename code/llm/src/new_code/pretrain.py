@@ -14,6 +14,7 @@ from src.new_code.load_data import CustomIterableDataset
 from src.new_code.utils import read_json, print_now
 import os
 from pytorch_lightning.strategies import DDPStrategy
+from pytorch_lightning.loggers import CSVLogger
 
 
 def is_float(string):
@@ -50,15 +51,19 @@ def read_hparams_from_file(file_path):
             #print(key, value)
         return hparams
 
-def get_callbacks(ckpoint_dir):
+def get_callbacks(ckpoint_dir, val_check_interval):
   if os.path.exists(ckpoint_dir) is False:
     os.mkdir(ckpoint_dir)
   callbacks = [
     ModelCheckpoint(
       dirpath=ckpoint_dir,#'projects/baseball/models/2010',
-      filename='model-{epoch:02d}',
+      filename='models/model-{epoch:02d}-{step}-{val_loss:.2f}',
       monitor='val_loss_combined',
       save_top_k=3,
+      save_last=False,
+      save_weights_only=False,
+      every_n_train_steps=val_check_interval+1,
+      verbose=True,
     )
   ]
   return callbacks
@@ -68,6 +73,7 @@ def pretrain(cfg):
   ckpoint_dir = cfg['CHECKPOINT_DIR']
   mlm_path = cfg['MLM_PATH']
   hparams = read_hparams_from_file(hparams_path)
+  val_check_interval = cfg.get('VAL_CHECK_INTERVAL', 5000)
   if 'RESUME_FROM_CHECKPOINT' in cfg:
     print_now(f"resuming training from checkpoint {cfg['RESUME_FROM_CHECKPOINT']}")
     model = TransformerEncoder.load_from_checkpoint(
@@ -78,15 +84,18 @@ def pretrain(cfg):
     model = TransformerEncoder(hparams)
   
   batch_size = cfg['BATCH_SIZE']
-  callbacks = get_callbacks(ckpoint_dir)
-  ddp = DDPStrategy(process_group_backend="mpi")
+  callbacks = get_callbacks(ckpoint_dir, val_check_interval+1)
+  #ddp = DDPStrategy(process_group_backend="mpi")
+  logger = CSVLogger(ckpoint_dir)
   trainer = Trainer(
     #strategy=ddp,
     default_root_dir=ckpoint_dir,
     callbacks=callbacks,
     max_epochs=cfg['MAX_EPOCHS'],
+    val_check_interval=val_check_interval,
     accelerator='gpu',
-    devices=1
+    devices=1,
+    logger=logger
   )
   val_dataset = CustomIterableDataset(mlm_path, validation=True)
   train_dataset = CustomIterableDataset(mlm_path, validation=False)

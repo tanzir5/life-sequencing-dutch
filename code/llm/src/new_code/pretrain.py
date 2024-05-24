@@ -81,12 +81,12 @@ def pretrain(cfg):
   callbacks = get_callbacks(ckpoint_dir)
   ddp = DDPStrategy(process_group_backend="mpi")
   trainer = Trainer(
-    strategy=ddp,
+    #strategy=ddp,
     default_root_dir=ckpoint_dir,
     callbacks=callbacks,
     max_epochs=cfg['MAX_EPOCHS'],
     accelerator='gpu',
-    devices=4
+    devices=1
   )
   val_dataset = CustomIterableDataset(mlm_path, validation=True)
   train_dataset = CustomIterableDataset(mlm_path, validation=False)

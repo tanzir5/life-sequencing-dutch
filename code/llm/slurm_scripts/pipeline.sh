@@ -1,7 +1,8 @@
 #!/bin/bash
 #
 #SBATCH --job-name=pipeline
-#SBATCH --ntasks 72
+#SBATCH --ntasks 1
+#SBATCH --cpus-per-task 72
 #SBATCH --nodes=1
 #SBATCH --time=12:00:00
 #SBATCH --mem=900G
@@ -19,6 +20,7 @@ module load Python/3.10.4-GCCcore-11.3.0
 source ossc_env_may2/bin/activate 
 
 date
-time python -m src.new_code.pipeline projects/dutch_real/pipeline_cfg.json
+srun python -m src.new_code.pipeline projects/dutch_real/pipeline_cfg.json
 
 echo "job ended"
+

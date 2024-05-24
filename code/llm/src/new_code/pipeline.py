@@ -166,6 +166,7 @@ def convert_to_numpy(data_dict):
 
 def encode_documents(docs_with_counter, write_path_prefix, needed_ids, do_mlm, mlm):
   docs, counter = docs_with_counter
+  print("Starting to encode document {counter}",flush=True)
   data_dict = init_data_dict(do_mlm)
   for document in docs:
     person_dict = load_json_obj(document)

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#SBATCH --job-name=pretrain
+#SBATCH --job-name=pretrain_small
 #SBATCH --ntasks-per-node=1
 #SBATCH --nodes=1
 #SBATCH --time=100:00:00

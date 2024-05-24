@@ -68,6 +68,9 @@ trainer = pl.trainer(strategy="ddp")
 
 ```
 
+### Using multiple jobs with 1 GPU each
+
+As above, export the visible device number in the bash script. Each job should see a different device id.
 
 ### Using multiple GPUs (1 node with 4 GPUs)
 

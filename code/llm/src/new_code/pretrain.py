@@ -73,7 +73,13 @@ def pretrain(cfg):
   ckpoint_dir = cfg['CHECKPOINT_DIR']
   mlm_path = cfg['MLM_PATH']
   hparams = read_hparams_from_file(hparams_path)
-  val_check_interval = cfg.get('VAL_CHECK_INTERVAL', 5000)
+  batch_size = cfg['BATCH_SIZE']
+  num_val_items = cfg.get('NUM_VAL_ITEMS', 100000)
+  val_check_interval = cfg.get(
+    'VAL_CHECK_INTERVAL', 
+    int(num_val_items*5/batch_size)
+  )
+  
   if 'RESUME_FROM_CHECKPOINT' in cfg:
     print_now(f"resuming training from checkpoint {cfg['RESUME_FROM_CHECKPOINT']}")
     model = TransformerEncoder.load_from_checkpoint(
@@ -83,7 +89,6 @@ def pretrain(cfg):
   else:
     model = TransformerEncoder(hparams)
   
-  batch_size = cfg['BATCH_SIZE']
   callbacks = get_callbacks(ckpoint_dir, val_check_interval+1)
   #ddp = DDPStrategy(process_group_backend="mpi")
   logger = CSVLogger(ckpoint_dir)
@@ -97,8 +102,16 @@ def pretrain(cfg):
     devices=1,
     logger=logger
   )
-  val_dataset = CustomIterableDataset(mlm_path, validation=True)
-  train_dataset = CustomIterableDataset(mlm_path, validation=False)
+  val_dataset = CustomIterableDataset(
+    mlm_path, 
+    validation=True, 
+    num_val_items=num_val_items
+  )
+  train_dataset = CustomIterableDataset(
+    mlm_path, 
+    validation=False, 
+    num_val_items=num_val_items
+  )
   val_dataloader = DataLoader(val_dataset, batch_size=batch_size) 
   train_dataloader = DataLoader(train_dataset, batch_size=batch_size)
   

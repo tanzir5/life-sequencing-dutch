@@ -8,9 +8,11 @@ import os
 import numpy as np
 
 class CustomIterableDataset(IterableDataset):
-    def __init__(self, file_path, validation, mlm_encoded=True):
+    def __init__(self, file_path, validation, num_val_items=None, val_split=0.1, mlm_encoded=True):
         self.file_path = file_path
         self.validation = validation
+        self.num_val_items = num_val_items
+        self.val_split = val_split
         self.set_mlm_encoded(mlm_encoded)
 
     def set_mlm_encoded(self, mlm_encoded, return_index=None):
@@ -23,7 +25,10 @@ class CustomIterableDataset(IterableDataset):
 
     def __iter__(self):
         with h5py.File(self.file_path, 'r') as hdf5:
-            num_val_items = int(hdf5['input_ids'].shape[0] * 0.1)
+            num_val_items = self.num_val_items
+            if num_val_items is None:
+              num_val_items = int(hdf5['input_ids'].shape[0] * self.val_split)
+            
             num_train_items = hdf5['input_ids'].shape[0] - num_val_items
             rank = int(os.environ.get("LOCAL_RANK", 0))
             world_size = int(os.environ.get("WORLD_SIZE", 1))    

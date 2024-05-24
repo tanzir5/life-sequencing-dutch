@@ -104,6 +104,21 @@ trainer = pl.trainer(strategy=ddp)
 
 ```
 
+## slurm utilities
+The following are useful to have in the `~/.bashrc` file
+```bash
+# squeue with more info and full job name
+alias sq='squeue -o "%.18i %.30j %.8u %.2t %10M %.6D %5m %11l %11L %R"'
+
+# recentfiles a b: list recent files in location "a" with matching pattern "b"
+# useful when there are many log files
+recentfiles() {
+    ls -alth "$1" | grep "$2" | head
+}
+
+```
+For more slurm aliases, see [here](https://gist.github.com/pansapiens/1b770fdbafa75f9aacb851d99a2aa9e2)
+
 
 ## Open questions 
 

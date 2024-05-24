@@ -57,7 +57,7 @@ def get_callbacks(ckpoint_dir, val_check_interval):
   callbacks = [
     ModelCheckpoint(
       dirpath=ckpoint_dir,#'projects/baseball/models/2010',
-      filename='models/model-{epoch:02d}-{step}-{val_loss:.2f}',
+      filename='model-{epoch:02d}-{step}-{val_loss:.2f}',
       monitor='val_loss_combined',
       save_top_k=3,
       save_last=False,

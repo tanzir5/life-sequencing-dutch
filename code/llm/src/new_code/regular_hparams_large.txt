@@ -3,10 +3,10 @@ max_epochs: 100
 train_split: 0.8
 batch_size: 10
 max_length: 512
-hidden_size: 280
-hidden_ff: 2210
+hidden_size: 500
+hidden_ff: 3940
 hidden_act: "swish"
-n_encoders: 5
+n_encoders: 9
 n_heads: 10
 n_local: 7
 local_window_size: 38

@@ -8,4 +8,4 @@ __pycache__/
 *.pyc                # Ignore compiled Python files in all directories
 *.pyo                # Ignore optimized compiled Python files
 *.pyd                # Ignore Windows specific Python extension files
-env_ossc
+env_ossc/

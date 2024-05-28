@@ -2,10 +2,8 @@ import sys
 
 from src.new_code.custom_vocab import CustomVocabulary
 from src.new_code.custom_vocab import DataFile
-from src.new_code.create_person_dict import CreatePersonDict
 from src.tasks.mlm import MLM
 from src.data_new.types import PersonDocument, Background
-from src.new_code.load_data import CustomDataset
 from src.new_code.utils import get_column_names, print_now, read_json, shuffle_json
 from src.new_code.constants import DAYS_SINCE_FIRST, INF
 
@@ -18,6 +16,13 @@ import fnmatch
 import csv
 import time
 import logging
+import h5py
+import subprocess
+import multiprocessing as mp
+from functools import partial
+
+from multiprocessing import Pool
+from tqdm import tqdm
 
 '''
   The pipeline is like the following: 
@@ -35,17 +40,31 @@ VOCAB_NAME = 'vocab_name'
 VOCAB_WRITE_PATH = 'vocab_write_path'
 TIME_KEY = "TIME_KEY"
 SEQUENCE_PATH = "SEQUENCE_PATH"
-MLM_WRITE_DIRECTORY = "MLM_WRITE_DIRECTORY"
+MLM_WRITE_PATH = "MLM_WRITE_PATH"
 TIME_RANGE_START = "TIME_RANGE_START"
 TIME_RANGE_END = "TIME_RANGE_END"
 
 min_event_threshold = 5
-CHUNK_SIZE = 1000000
+
+def read_jsonl_file_in_chunks(file_path, chunk_size, needed_ids, do_mlm):
+  """Generator that yields chunks of JSON objects from a JSONL file."""
+  with open(file_path, 'r') as file:
+    chunk = []
+    counter = 0 
+    for line in file:
+      chunk.append(line)
+      if len(chunk) == chunk_size:
+        yield chunk, counter
+        chunk = []
+        counter += 1
+    if chunk:  # Yield any remaining JSON objects
+        yield chunk, counter
 
 def get_raw_file_name(path):
   return path.split("/")[-1].split(".")[0]
 
 def create_vocab(vocab_write_path, data_file_paths, vocab_name, primary_key):
+  logging.debug("Starting create_vocab function")
   data_files = []
   for path in data_file_paths:
     data_files.append(
@@ -62,6 +81,7 @@ def create_vocab(vocab_write_path, data_file_paths, vocab_name, primary_key):
   # with open(vocab_write_path, 'w') as f:
   #   json.dump(custom_vocab.token2index, f)
   custom_vocab.save_vocab(vocab_write_path)
+  logging.debug("Finished create_vocab function")
   return custom_vocab
 
 def get_ids(path):
@@ -69,45 +89,6 @@ def get_ids(path):
     ids = json.load(f)
   ret_ids = [str(int_id) for int_id in ids]
   return set(ret_ids)
-
-def write_chunk_and_init(
-  write_dir, 
-  chunk_id,
-  do_mlm,
-  sequence_id,
-  input_ids,
-  padding_mask,
-  target_tokens,
-  target_pos,
-  target_cls,
-  original_sequence,
-):
-  data = {
-    'sequence_id': sequence_id,
-    'input_ids': torch.tensor(np.array(input_ids)),
-    'padding_mask': torch.tensor(np.array(padding_mask)),
-  }
-  if do_mlm:
-    data.update({
-      'target_tokens': torch.tensor(np.array(target_tokens)),
-      'target_pos': torch.tensor(np.array(target_pos)),
-      'target_cls': torch.tensor(np.array(target_cls)),
-      'original_sequence': torch.tensor(np.array(original_sequence)),
-    }) 
-  print_now(f'total # of people {len(sequence_id)}')   
-  print_now(f"segment max?: {torch.max(data['input_ids'][:,3])}")
-  print_now(f"input_ids shape {data['input_ids'].shape}")
-  dataset = CustomDataset(data, mlm_encoded=do_mlm)
-  write_path = os.path.join(write_dir, f"{chunk_id}.pkl")
-  with open(write_path, 'wb') as file:
-      pickle.dump(dataset, file)
-  input_ids.clear()
-  padding_mask.clear()
-  target_tokens.clear()
-  target_pos.clear()
-  target_cls.clear()
-  original_sequence.clear()
-  sequence_id.clear()
 
 def print_info(start_time, i, total, sequence_id):
   elapsed_time = time.time() - start_time
@@ -118,26 +99,190 @@ def print_info(start_time, i, total, sequence_id):
   print_now(f"included: {len(sequence_id)}")
   print_now(f"included%: {len(sequence_id)/(i+1)*100}")
 
+def count_lines(file_path):
+  start = time.time()
+  result = subprocess.run(
+    ['wc', '-l', file_path], 
+    text=True, 
+    capture_output=True
+  )
+  line_count = int(result.stdout.split()[0])
+  end = time.time()
+  logging.info(f"Time needed to wc -l {file_path}: {end-start} seconds")
+  return line_count
+
+def load_json_obj(document):
+  person_dict = None
+  try:
+    person_dict = json.loads(document)
+  except json.JSONDecodeError:
+    logging.error(f"Failed to decode JSON.\n document = {document}")
+  except Exception as e:
+    logging.error(f"{str(e)}.\n document = {document}")
+  return person_dict
+
+def init_data_dict(do_mlm):
+  data_dict = {
+    'input_ids':[],
+    'padding_mask':[],
+    'original_sequence':[],
+    'sequence_id':[],
+  }
+  if do_mlm:
+    data_dict.update(
+      {
+        'target_tokens':[],
+        'target_pos':[],
+        'target_cls':[],
+      }
+    )
+  return data_dict
+
+def update_data_dict(data_dict, output, do_mlm):
+  data_dict['sequence_id'].append(str(output.sequence_id))
+  data_dict['original_sequence'].append(output.original_sequence)
+  data_dict['input_ids'].append(output.input_ids)
+  data_dict['padding_mask'].append(output.padding_mask)
+  if do_mlm:
+    data_dict['target_tokens'].append(output.target_tokens)
+    data_dict['target_pos'].append(output.target_pos)
+    data_dict['target_cls'].append(output.target_cls)
+
+def convert_to_numpy(data_dict):
+  # check if data_dict is empty
+  if len(data_dict) == 0:
+    return 
+  context_len = len(data_dict['original_sequence'][0])
+
+  for key, value in data_dict.items():
+    if key == 'sequence_id':
+      continue
+    if key in ['target_tokens', 'target_pos']:
+      np_value = np.full((len(value), context_len), -1)
+      for i, row in enumerate(value):
+        np_value[i][:len(row)] = row
+      value = np_value
+    data_dict[key] = np.array(value)
+
+def encode_documents(docs_with_counter, write_path_prefix, needed_ids, do_mlm, mlm):
+  docs, counter = docs_with_counter
+  print("Starting to encode document {counter}",flush=True)
+  data_dict = init_data_dict(do_mlm)
+  for document in docs:
+    person_dict = load_json_obj(document)
+    if (
+      person_dict is None or len(person_dict['sentence']) < min_event_threshold
+    ):
+      continue
+    person_id = person_dict['person_id']
+    if needed_ids is not None and person_id not in needed_ids:
+        continue
+    person_document = PersonDocument(
+      person_id=person_dict['person_id'],
+      sentences=person_dict['sentence'],
+      abspos=[int(x) for x in person_dict['abspos']],
+      age=[int(x) for x in person_dict['age']],
+      segment=person_dict['segment'],
+      background=Background(**person_dict['background']),
+    )
+    output = mlm.encode_document(
+      person_document,
+      do_mlm=do_mlm,
+    )
+    if output is None:
+      continue
+    update_data_dict(data_dict, output, do_mlm)
+    
+  convert_to_numpy(data_dict)
+  write_path = f"{write_path_prefix}_{counter}.h5" 
+  write_to_hdf5(write_path, data_dict)
+
+def init_hdf5_datasets(h5f, data_dict):
+  """Initialize HDF5 datasets when they do not exist."""
+  for key in data_dict:
+    if key == 'sequence_id':
+      h5f.create_dataset(
+        "sequence_id", 
+        shape=(0, ), 
+        maxshape=(None,), 
+        dtype=h5py.special_dtype(vlen=str), 
+        chunks=True, 
+        compression="gzip"
+      )
+    else:
+      final_shape = list(data_dict[key].shape)
+      final_shape[0] = 0
+      final_shape = tuple(final_shape)
+      
+      maxshape = list(data_dict[key].shape)
+      maxshape[0] = None
+      maxshape = tuple(maxshape)
+
+      if len(data_dict[key].shape) > 1:
+        chunks = list(data_dict[key].shape)
+        chunks[0] = 1
+        chunks = tuple(chunks)
+      else:
+        chunks=True
+      h5f.create_dataset(
+        key, 
+        shape=final_shape,
+        maxshape=maxshape, 
+        dtype='i4', 
+        chunks=chunks, 
+        compression="gzip"
+      )
+
+
+def debug_log_hdf5(data_dict, h5f):
+  logging.debug("data dict shape printing")
+  for key, val in data_dict.items():
+    if key == 'sequence_id':
+      logging.debug("%s, %s", key, len(val))
+    else:
+      logging.debug("%s, %s", key, val.shape)
+
+  logging.debug("After resize, h5f shape printing")
+  for key, val in h5f.items():
+    if key == 'sequence_id':
+      logging.debug("%s, %s", key, len(val))
+    else:
+      logging.debug("%s, %s", key, val.shape)
+
+def write_to_hdf5(write_path, data_dict):
+  """Write processed data to an HDF5 file."""
+  if len(data_dict) == 0:
+    return
+  with h5py.File(write_path, 'a') as h5f:
+    if 'sequence_id' not in h5f:
+      init_hdf5_datasets(h5f, data_dict)
+
+    current_size = h5f['sequence_id'].shape[0]
+    new_size = current_size + len(data_dict['sequence_id'])
+    debug_log_hdf5(data_dict, h5f)
+    for key in h5f:
+      h5f[key].resize(new_size, axis=0)
+      h5f[key][current_size:new_size] = data_dict[key]
 
 def generate_encoded_data(
   custom_vocab,
   sequence_path,
-  write_dir,
+  write_path_prefix,
   time_range=None,
   do_mlm=True,
   needed_ids_path=None,
   shuffle=False,
+  chunk_size=5000,
+  parallel=True
 ):
-  # create mlmencoded documents
-  if not os.path.exists(write_dir):
-    # Create the directory if it does not exist
-    os.mkdir(write_dir)
-
+  logging.debug("Starting generate_encoded_data function")
   if needed_ids_path:
     needed_ids = get_ids(needed_ids_path)
-    print_now(f'needed ids # = {len(needed_ids)}')
+    logging.info('needed ids # = %s', len(needed_ids))
     random_id = list(needed_ids)[0]
-    print_now(f'a random id is {random_id}, type is {type(random_id)}')
+    logging.info('a random id is %s, type is %s', random_id, type(random_id))
+  else:
+    needed_ids = None
 
   if shuffle:
     new_seq_path = sequence_path[:-5] + "_shuffled_work.json"
@@ -145,96 +290,43 @@ def generate_encoded_data(
     sequence_path = new_seq_path
     logging.info("Shuffled json file created")
 
-
+  total_docs = count_lines(sequence_path)
   mlm = MLM('dutch_v0', 512)
   mlm.set_vocabulary(custom_vocab)
   if time_range:
     mlm.set_time_range(time_range)
   
-  with open(sequence_path, 'r') as f:
-    # hardcoding is bad
-    # TODO: get # of people beforehand
-    total = 27089176
-    start_time = time.time()
-    completed_count = 0
-    chunk_id = 0
-    input_ids = []
-    padding_mask = []
-    target_tokens = []
-    target_pos = []
-    target_cls = []
-    original_sequence = []
-    sequence_id = []
-    
-    first_time_print_done = False
-    for i, line in enumerate(f):
-      do_print = (i%300000 == 0)
-      if completed_count != 0 and completed_count%CHUNK_SIZE == 0:
-        write_chunk_and_init(
-          write_dir, 
-          chunk_id,
-          do_mlm,
-          sequence_id,
-          input_ids,
-          padding_mask,
-          target_tokens,
-          target_pos,
-          target_cls,
-          original_sequence,
-        )
-        first_time_print_done = False
-        chunk_id += 1
+  num_processes = max(1, mp.cpu_count()-5)
+  logging.info(f"# of processes = {num_processes}")
+  chunks = read_jsonl_file_in_chunks(
+    sequence_path, 
+    chunk_size, 
+    needed_ids,
+    do_mlm
+  )
+  progress_bar = tqdm(total=total_docs, desc="Encoding documents", unit="doc")
 
-      if do_print:
-        print_info(start_time, i, total, sequence_id) 
-      
-      # Parse each line as a JSON-encoded list
-      try:
-        person_dict = json.loads(line)
-      except json.JSONDecodeError:
-        logging.error(f"Failed to decode JSON.\n line = {line}")
-      except Exception as e:
-        logging.error(f"{str(e)}.\n line = {line}")
-      if len(person_dict['sentence']) < min_event_threshold:
-        continue
-      # Now 'json_data' contains the list from the current line
-      # print_now(type(person_dict))
-      person_id = person_dict['person_id']
+  helper_encode_documents = partial(
+    encode_documents, 
+    write_path_prefix=write_path_prefix,
+    needed_ids=needed_ids, 
+    do_mlm=do_mlm,
+    mlm=mlm,
+  )
 
-      if first_time_print_done is False:
-        print_now(f"first time print for chunk {chunk_id}")
-        print_now(f"person_id is {person_id}, type is {type(person_id)}")
-        if needed_ids_path is not None:
-          print_now(f"present = {person_id in needed_ids}")
-        first_time_print_done = True
+  if parallel:
+    logging.info("Starting multiprocessing")
+    with Pool(processes=num_processes) as pool:
+      for _ in pool.imap_unordered(helper_encode_documents, chunks):
+        progress_bar.update(chunk_size)
+  else: 
+    for chunk in chunks:
+      helper_encode_documents(chunk)
+      progress_bar.update(chunk_size)
+  
+  progress_bar.close()
+  logging.debug("Finished generate_encoded_data function")
 
-      if needed_ids_path is not None and person_id not in needed_ids:
-        continue
-
-      person_document = PersonDocument(
-        person_id=person_dict['person_id'],
-        sentences=person_dict['sentence'],
-        abspos=[int(x) for x in person_dict['abspos']],
-        age=[int(x) for x in person_dict['age']],
-        segment=person_dict['segment'],
-        background=Background(**person_dict['background']),
-      )
-
-      output = mlm.encode_document(
-        person_document,
-        do_print=do_print,
-        do_mlm=do_mlm,
-      )
-      if output is None:
-        continue
-      sequence_id.append(output.sequence_id)
-      original_sequence.append(output.original_sequence)
-      input_ids.append(output.input_ids)
-      padding_mask.append(output.padding_mask)
-      if do_mlm:
-        target_tokens.append(output.target_tokens)
-        target_pos.append(output.target_pos)
-        target_cls.append(output.target_cls)
 
 def get_data_files_from_directory(directory, primary_key):
   data_files = []
@@ -271,11 +363,11 @@ if __name__ == "__main__":
   vocab_write_path = cfg[VOCAB_WRITE_PATH]
   vocab_name = cfg[VOCAB_NAME]
   time_key = cfg[TIME_KEY]
-  mlm_write_dir = cfg[MLM_WRITE_DIRECTORY]
+  mlm_write_path = cfg[MLM_WRITE_PATH]
   data_file_paths = get_data_files_from_directory(
     cfg[DATA_DIRECTORY_PATH], primary_key
   )
-  print_now(f"# of data_files_paths = {len(data_file_paths)}")
+  logging.info("# of data_files_paths = %s", len(data_file_paths))
 
   custom_vocab = create_vocab(
     data_file_paths=data_file_paths,
@@ -287,11 +379,11 @@ if __name__ == "__main__":
   generate_encoded_data(
     custom_vocab=custom_vocab, 
     sequence_path=sequence_path, 
-    write_dir=mlm_write_dir,
+    write_path_prefix=mlm_write_path,
     time_range=get_time_range(cfg),
     do_mlm=cfg['DO_MLM'],
-    needed_ids_path=(
-      cfg['NEEDED_IDS_PATH'] if 'NEEDED_IDS_PATH' in cfg else None
-    ),
-    shuffle=cfg['SHUFFLE'] if 'SHUFFLE' in cfg else False
+    needed_ids_path=cfg.get('NEEDED_IDS_PATH', None),
+    shuffle=cfg.get('SHUFFLE', False),
+    chunk_size=cfg.get('CHUNK_SIZE', 500),
+    parallel=cfg.get("PARALLEL", True)
   )

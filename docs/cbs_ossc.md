@@ -20,6 +20,12 @@ This is information from Tom.
 It goes through [access control lists](https://servicedesk.surf.nl/wiki/pages/viewpage.action?pageId=30660238). 
 This currently creates constraints on the permissions of directories/files. If user A creates directory `mydir/`, user B in the same project may not automatically have permissions to write/execute code on in `mydir/`. As far as we understand, the user that created `mydir/` needs to use the `setfacl` and `getfacl` to give other project users those permissions. 
 
+As per ticket SD-74551 on the SURF service desk, 
+- there should be now a default ACL in which everyone in the group ossc9424 also has read, write, execute permission. 
+- user ossc9424fhvo is the owner of all files that were previously owned by ossc9424
+- the directories `~/Dakota_network`, `~/Tanzir/`, and `~/Life_Course_Evaluation` still are chowned by their respective creators. But `getfacl` returns either `group:rwx` or `group:ossc9424:rwx`, which I understand gives rwx access to the ossc9424 group in both cases.
+- there are still some directories for which the group lacks write access, for instance `Network_Embeddings`. 
+
 
 ## Filesystem
 
@@ -100,6 +106,21 @@ ddp = DDPStrategy(process_group_backend="mpi")
 trainer = pl.trainer(strategy=ddp)
 
 ```
+
+## slurm utilities
+The following are useful to have in the `~/.bashrc` file
+```bash
+# squeue with more info and full job name
+alias sq='squeue -o "%.18i %.30j %.8u %.2t %10M %.6D %5m %11l %11L %R"'
+
+# recentfiles a b: list recent files in location "a" with matching pattern "b"
+# useful when there are many log files
+recentfiles() {
+    ls -alth "$1" | grep "$2" | head
+}
+
+```
+For more slurm aliases, see [here](https://gist.github.com/pansapiens/1b770fdbafa75f9aacb851d99a2aa9e2)
 
 
 ## Open questions 

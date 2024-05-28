@@ -1,11 +1,11 @@
 #!/bin/bash
 #
-#SBATCH --job-name=pretrain
-#SBATCH --ntasks-per-node=1
+#SBATCH --job-name=pretrain_multigpu
+#SBATCH --ntasks-per-node=4
 #SBATCH --nodes=1
-#SBATCH --time=03:00:00
-#SBATCH --cpus-per-task=36
-#SBATCH --mem=180G
+#SBATCH --time=10:00:00
+#SBATCH --cpus-per-task=9
+#SBATCH --mem=0
 #SBATCH -p comp_env
 #SBATCH -e /gpfs/ostor/ossc9424/homedir/Tanzir/LifeToVec_Nov/projects/dutch_real/logs/%x.%j.err
 #SBATCH -o /gpfs/ostor/ossc9424/homedir/Tanzir/LifeToVec_Nov/projects/dutch_real/logs/%x.%j.out
@@ -24,11 +24,11 @@ module load matplotlib/3.5.2-foss-2022a
 source "$HOMEDIR"/"$VENV"/bin/activate
 
 echo "job started" 
-export CUDA_VISIBLE_DEVICES=0
+export CUDA_VISIBLE_DEVICES=0,1,2,3
 
 cd "$HOMEDIR"/Tanzir/LifeToVec_Nov/
 
 date
-time python src/new_code/pretrain.py projects/dutch_real/pretrain_cfg.json
+srun --mpi=pmi2 python src/new_code/pretrain.py projects/dutch_real/pretrain_cfg.json
 
 echo "job ended successfully"

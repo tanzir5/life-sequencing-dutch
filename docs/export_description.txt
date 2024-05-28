@@ -1,0 +1,36 @@
+We intend to generate synthetic versions of both the original CBS data and the data we have created by postprocessing CBS data. In this export request, we include summary statistics of different variables excluding Personally Identifiable Information (PII) respecting anonymity. 
+
+For each spreadsheet, we create at most three different files containing summary statistics. 
+
+For example, a spreadsheet named "x.csv" will have the following corresponding files in this export request: 
+
+1. x_meta.txt
+2. x_columns.csv
+3. x_covariance.csv
+
+x_meta.txt will contain a dictionary with the following keys: 
+i) path: denoting the path of the original file in OSSC
+ii) shape: the number of rows and the number of columns in the original file
+iii) columns_with_dtypes: a list of pairs where the 1st member is a column name and the 2nd member is the data type (numeric, categorical, etc). Columns with type "object" are columns with string values and thus categorical.
+iv) total_nobs: # of rows in the original file (this is repeated in shape too)
+v) nobs_sumstat: # of rows we sampled for creating the summary statistics for this spreadsheet. For extremely huge spreadsheets, we sampled a moderate number of rows and created the summary statistics. 
+vi) has_pii_columns: the PII columns that the original file had and we did not include in x_columns.csv
+
+x_columns.csv will contain 15 columns and the # of rows will be equal to the number of variables(columns) in the original spreadsheet. The 15 columns are: 
+i) variable_name: name of the variable in the original spreadsheet
+ii) median: median value for numeric variable
+iii) mean: ^ same for mean
+iv) std_dev: ^ same for standard deviation
+v) 10th_percentile: the value of the data at the 10th percentile
+vi) 90th_percentile: ^ same for the 90th percentile
+vii) q1: ^ same for the 25th percentile
+viii) q3: ^ same for the 75th percentile
+ix) null_fraction: fraction of rows that were empty
+x) category_top_0: for categorical variables, the name of the category with the highest frequency and the relative frequency of that category within this dataset. The data are recorded as "V--p", wher "V" is the value of the categorical column and "p" is the percent of records with this value. 
+xi - xiv) category_top_1	category_top_2	category_top_3	category_top_4: ^ same for the the next top 4 categories.
+xv) _others: total relative frequency of all other categories
+
+x_covariance.csv will be only created for spreadsheets that has at least one numeric variable. It will be a (n+1)x(n+1) table where n = # of numeric variables the original spreadsheet has. The first row and column will contain names of the numeric variables. The cell in the i-th row and the j-th column would denote the covariance between the i-th and the j-th numeric variable. This is a symmetric matrix. 
+
+For all statistics, we use all the rows (typically in the millions for all of them), or we sample with at least 1000 data points. For every file x, the number of rows used can be found at nobs_sumstat of x_meta.txt or if it is empty/None, then at total_nobs of x_meta.txt. If nobs_sumstat is not None but not a binding limit, all rows are used. 
+

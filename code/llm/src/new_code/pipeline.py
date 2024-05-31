@@ -294,7 +294,7 @@ def generate_encoded_data(
     sequence_path = new_seq_path
 
   total_docs = count_lines(sequence_path)
-  mlm = MLM('dutch_v0', 512)
+  mlm = MLM('dutch_v0', 64)
   mlm.set_vocabulary(custom_vocab)
   if time_range:
     mlm.set_time_range(time_range)

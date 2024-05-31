@@ -286,9 +286,12 @@ def generate_encoded_data(
 
   if shuffle:
     new_seq_path = sequence_path[:-5] + "_shuffled_work.json"
-    shuffle_json(sequence_path, new_seq_path)
+    if not os.path.isfile(new_seq_path):
+      shuffle_json(sequence_path, new_seq_path)
+      logging.info("Shuffled json file created")
+    else:
+      logging.info("Using existing shuffled json file at %s", new_seq_path)
     sequence_path = new_seq_path
-    logging.info("Shuffled json file created")
 
   total_docs = count_lines(sequence_path)
   mlm = MLM('dutch_v0', 512)

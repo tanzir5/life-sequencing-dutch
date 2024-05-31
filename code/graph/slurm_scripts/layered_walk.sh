@@ -17,6 +17,6 @@ echo "job started"
 cd /gpfs/ostor/ossc9424/homedir/Dakota_network/
 
 date
-time python layered_random_walk.py
+time python layered_random_walk.py --year 2016 --start_int 5
 
 echo "job ended successfully" 

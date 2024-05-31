@@ -100,7 +100,8 @@ def pretrain(cfg):
     val_check_interval=val_check_interval,
     accelerator='gpu',
     devices=1,
-    logger=logger
+    logger=logger,
+    precision=16
   )
   val_dataset = CustomIterableDataset(
     mlm_path, 

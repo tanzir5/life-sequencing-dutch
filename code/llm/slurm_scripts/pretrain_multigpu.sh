@@ -29,6 +29,6 @@ export CUDA_VISIBLE_DEVICES=0,1,2,3
 cd "$HOMEDIR"/Tanzir/LifeToVec_Nov/
 
 date
-srun --mpi=pmi2 python src/new_code/pretrain.py projects/dutch_real/pretrain_cfg.json
+srun --mpi=pmi2 python -m src.new_code.pretrain projects/dutch_real/pretrain_cfg.json
 
 echo "job ended successfully"

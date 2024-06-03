@@ -29,6 +29,6 @@ export CUDA_VISIBLE_DEVICES=0
 cd "$HOMEDIR"/Tanzir/LifeToVec_Nov/
 
 date
-time python src/new_code/pretrain.py projects/dutch_real/pretrain_cfg.json
+time python -m src.new_code/pretrain projects/dutch_real/pretrain_cfg.json
 
 echo "job ended successfully"

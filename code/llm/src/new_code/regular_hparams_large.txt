@@ -29,7 +29,7 @@ multihead_dc: False
 num_random_features: 436
 
 # From trainer args..
-learning_rate: 5.e-3
+learning_rate: 1.e-5
 weight_decay: 0.01
 beta1: 0.9
 beta2: 0.999

@@ -3,5 +3,5 @@
   "CHECKPOINT_DIR": "projects/dutch_real/models/2017_medium/",   
   "MLM_PATH": "projects/dutch_real/gen_data/mlm_encoded_upto_2017.h5",
   "MAX_EPOCHS": 30,
-  "BATCH_SIZE": 128
+  "BATCH_SIZE": 1024
 }

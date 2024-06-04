@@ -67,7 +67,6 @@ def make_plot(df, yvar, xvar, stage, meta):
     stage (str): indicates training/validation step 
     meta (dict): dictionary with model metadata
     """
-    df[yvar] = pd.to_numeric(df[yvar], errors="coerce")
     val_mask = ~df[yvar].isna()
     df_plot = df.loc[val_mask, [xvar, yvar]]
 
@@ -98,6 +97,9 @@ def summarise(filename, meta):
         "train": "train/loss_step"
     }
     for stage, yvar in fig_map.items():
+        df[yvar] = pd.to_numeric(df[yvar], errors="coerce")
+        out_dict[f"min_loss_{stage}"] = df[yvar].min()
+
         xvar = "n_samples"
         nan_mask = df[yvar] == "nan"
 

@@ -197,7 +197,7 @@ def encode_documents(docs_with_counter, write_path_prefix, needed_ids, do_mlm, m
   write_path = f"{write_path_prefix}_{counter}.h5" 
   write_to_hdf5(write_path, data_dict)
 
-def init_hdf5_datasets(h5f, data_dict):
+def init_hdf5_datasets(h5f, data_dict, dtype='i4'):
   """Initialize HDF5 datasets when they do not exist."""
   for key in data_dict:
     if key == 'sequence_id':
@@ -228,7 +228,7 @@ def init_hdf5_datasets(h5f, data_dict):
         key, 
         shape=final_shape,
         maxshape=maxshape, 
-        dtype='i4', 
+        dtype=dtype, 
         chunks=chunks, 
         compression="gzip"
       )
@@ -249,13 +249,18 @@ def debug_log_hdf5(data_dict, h5f):
     else:
       logging.debug("%s, %s", key, val.shape)
 
-def write_to_hdf5(write_path, data_dict):
-  """Write processed data to an HDF5 file."""
+def write_to_hdf5(write_path, data_dict, dtype='i4'):
+  """Write processed data to an HDF5 file.
+
+  Args:
+  dtype: data types for arrays except the `sequence_id` array. 
+   
+  """
   if len(data_dict) == 0:
     return
   with h5py.File(write_path, 'a') as h5f:
     if 'sequence_id' not in h5f:
-      init_hdf5_datasets(h5f, data_dict)
+      init_hdf5_datasets(h5f, data_dict, dtype)
 
     current_size = h5f['sequence_id'].shape[0]
     new_size = current_size + len(data_dict['sequence_id'])

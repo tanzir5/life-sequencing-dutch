@@ -13,8 +13,6 @@ class CustomIterableDataset(IterableDataset):
         self.validation = validation
         self.num_val_items = num_val_items
         self.val_split = val_split
-        if inference:
-            assert not mlm_encoded
         self.inference = inference
         self.set_mlm_encoded(mlm_encoded)
 

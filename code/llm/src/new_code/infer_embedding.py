@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import src.transformer
 from src.transformer.models import TransformerEncoder
-from src.new_code.load_data import CustomDataset
+from src.new_code.load_data import CustomIterableDataset
 from src.new_code.pretrain import read_hparams_from_file
 from src.new_code.utils import read_json, print_now
 from torch.utils.data import DataLoader
@@ -52,25 +52,36 @@ def inference(cfg):
   mean_path = cfg['MEAN_WRITE_PATH']
   tokenized_path = cfg['TOKENIZED_PATH']
   model = load_model(checkpoint_path, hparams)
-  with open(tokenized_path, 'rb') as file:
-    dataset = pickle.load(file)
+
+  dataset = CustomIterableDataset(
+    tokenized_path, 
+    validation=False,
+    inference=False
+  )
   dataset.set_mlm_encoded(False)
-  if "original_sequence" in dataset.data:
-    dataset.data["input_ids"][:, 0, :] = dataset.data["original_sequence"]
-  print_now_dataset_stuff(dataset)
+  # with open(tokenized_path, 'rb') as file:
+  #   dataset = pickle.load(file)
+  # dataset.set_mlm_encoded(False)
+  ## unclear from here
+  ## XXX won't work for now
+  # if "original_sequence" in dataset.data:
+  #   dataset.data["input_ids"][:, 0, :] = dataset.data["original_sequence"]
+  # print_now_dataset_stuff(dataset) 
+  ## unclear from here
 
   if 'BATCH_SIZE' in cfg:
     batch_size = cfg['BATCH_SIZE']
   else:
     batch_size = 512
-  dataloader = DataLoader(dataset, batch_size=batch_size, collate_fn=custom_collate)
+  dataloader = DataLoader(dataset, batch_size=batch_size)
 
   all_outputs = []
   people_embedding_cls = {}
   people_embedding_mean = {}
-  for i in tqdm(range(0, len(dataset), batch_size)):
+  for i, batch in enumerate(dataloader):
+  # for i in tqdm(range(0, len(dataset), batch_size)):
       # Move the batch to GPU if available
-      batch = dataset[i:i+batch_size]
+      # batch = dataset[i:i+batch_size]
       if torch.cuda.is_available():
           batch['input_ids'] = batch['input_ids'].to('cuda')
           batch['padding_mask'] = batch['padding_mask'].to('cuda')
@@ -86,7 +97,8 @@ def inference(cfg):
         print_now(f"batch length = {len(batch['sequence_id'])}")
         
       for j in range(len(batch['sequence_id'])):
-        primary_id = str(batch['sequence_id'][j])
+        # primary_id = str(batch['sequence_id'][j])
+        primary_id = batch['sequence_id'][j].decode()
         cls_emb = outputs[j][0].cpu()
         mean_emb = torch.mean(outputs[j],0).cpu()
         people_embedding_cls[primary_id] = cls_emb.tolist()
@@ -104,6 +116,8 @@ def inference(cfg):
   # all_outputs = torch.cat(all_outputs, dim=0)
 
   # 'all_outputs' now contains the model's predictions or outputs for the entire dataset
+  # XXX this needs to be fixed and we should also use a hdf5 file -- what are the keys of the file
+    # and it should go into the loop above
   dump_embeddings(cls_path, people_embedding_cls)
   dump_embeddings(mean_path, people_embedding_mean)
 

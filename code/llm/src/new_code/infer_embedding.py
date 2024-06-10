@@ -42,6 +42,7 @@ def inference(cfg):
   tokenized_path = cfg['TOKENIZED_PATH']
   model = load_model(checkpoint_path, hparams)
 
+  logging.info("Reading from tokenzied path: %s", tokenized_path)
   dataset = CustomIterableDataset(
     tokenized_path, 
     validation=False,

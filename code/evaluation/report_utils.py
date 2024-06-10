@@ -10,6 +10,7 @@ import numpy as np
 import random
 import csv
 import json
+import h5py 
 from nearest_neighbor import build_index, get_nearest_neighbor_e2e
 
 # Computes/Loads any values that are used to evaluate all embedding sets, such as income at age 30 or marriage
@@ -172,11 +173,19 @@ def precompute_local(embedding_set, top_k=100, only_embedding=False):
 
     if emb_type == 'LLM':
         emb_url = root + url
-        with open(emb_url, 'r') as json_file:
-            embedding_dict = dict(json.load(json_file))
-            
-        # Need to typecast into int
-        embedding_dict = {int(key):value for key, value in embedding_dict.items()}
+        if "json" in emb_url:
+            with open(emb_url, 'r') as json_file:
+                embedding_dict = dict(json.load(json_file))
+                
+            # Need to typecast into int
+            embedding_dict = {int(key):value for key, value in embedding_dict.items()}
+        else:
+            embedding_type = embedding_set["emb_type"]
+            with h5py.File(emb_url, "r") as f:
+                sample_size = 100
+                sequence_id = f["sequence_id"][:sample_size]
+                embeddings = f[embedding_type][:sample_size, :]
+                embedding_dict = {int(key): emb.tolist() for key, emb in zip(sequence_id, embeddings)}
 
     #         for person in data_dict:
     #             relevant = data_dict[person]

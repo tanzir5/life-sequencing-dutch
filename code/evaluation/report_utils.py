@@ -182,9 +182,8 @@ def precompute_local(embedding_set, top_k=100, only_embedding=False):
         else:
             embedding_type = embedding_set["emb_type"]
             with h5py.File(emb_url, "r") as f:
-                sample_size = 100
-                sequence_id = f["sequence_id"][:sample_size]
-                embeddings = f[embedding_type][:sample_size, :]
+                sequence_id = f["sequence_id"][:]
+                embeddings = f[embedding_type][:, :]
                 embedding_dict = {int(key): emb.tolist() for key, emb in zip(sequence_id, embeddings)}
 
     #         for person in data_dict:

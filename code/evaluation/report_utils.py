@@ -185,6 +185,9 @@ def precompute_local(embedding_set, top_k=100, only_embedding=False):
                 sequence_id = f["sequence_id"][:]
                 embeddings = f[embedding_type][:, :]
                 embedding_dict = {int(key): emb.tolist() for key, emb in zip(sequence_id, embeddings)}
+                embedding_lengths = [len(x) for x in embedding_dict.values()]
+                min_len, max_len = np.min(embedding_lengths), np.max(embedding_lengths)
+                assert min_len == max_len, "embedding lengths differ!"
 
     #         for person in data_dict:
     #             relevant = data_dict[person]

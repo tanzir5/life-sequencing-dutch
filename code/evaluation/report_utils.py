@@ -11,6 +11,7 @@ import random
 import csv
 import json
 import h5py 
+import logging 
 from nearest_neighbor import build_index, get_nearest_neighbor_e2e
 
 # Computes/Loads any values that are used to evaluate all embedding sets, such as income at age 30 or marriage
@@ -627,6 +628,9 @@ def plot_distance_vs_ground_truth(embedding_dict, ground_truth, distance_matrix,
 ########################################################################################################################
 def linear_variable_prediction(embedding_dict, variable_dict, years, dtype="single", baseline=None):
 
+
+    logging.debug("dtype is %s", dtype)
+    logging.debug("baseline is None is %s", baseline is None)
     return_dict = {}
     baseline_return_dict = {}
 
@@ -643,6 +647,7 @@ def linear_variable_prediction(embedding_dict, variable_dict, years, dtype="sing
 
     for year in years:
     
+        logging.debug("year is: %s", year)
         test_counts_by_year[year] = 0
 
         if year not in embeddings_by_year:

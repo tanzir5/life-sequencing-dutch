@@ -9,6 +9,7 @@ from datetime import date
 import report_utils
 import pickle
 import copy
+import logging 
 
 if __name__ == '__main__':
 
@@ -42,6 +43,12 @@ if __name__ == '__main__':
     )
     
     args = parser.parse_args()
+
+    logging.basicConfig(
+        format='%(asctime)s %(name)s %(levelname)s: %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S',
+        level=logging.DEBUG
+    )
 
     # Load embedding set written by write_embedding_metadata.py
     load_url = 'embedding_meta/' + args.collection_name + '.pkl'
@@ -95,7 +102,7 @@ if __name__ == '__main__':
     # The years we will try to predict for
     years = [i for i in range(2011, 2022)]
 
-    print("Beginning report generation for embedding set:", args.collection_name, flush=True)
+    logging.info("Beginning report generation for embedding set: %s", args.collection_name)
     
     full_start = time.time()
 
@@ -154,7 +161,7 @@ if __name__ == '__main__':
 
         section_end = time.time()
         delta = section_end - section_start
-        print("Loaded embeddings:", name, "over", str(np.round(delta/60.0, 2)), "minutes", flush=True)
+        logging.info("Loaded embeddings: %s over %s minutes", name, np.round(delta/60.0, 2))
 
         savename = ""
         for chunk in name.split(" "):
@@ -186,7 +193,7 @@ if __name__ == '__main__':
                 
             section_end = time.time()
             delta = section_end - section_start
-            print("Computed Embedding Comparisons for:", name, "over", str(np.round(delta/60.0, 2)), "minutes", flush=True)
+            logging.info("Computed Embedding Comparisons for: %s over %s minutes", name, np.round(delta/60.0, 2))
 
         # 1. Plot hop distance distributions
         #####################################################################################################
@@ -205,7 +212,7 @@ if __name__ == '__main__':
 
                 section_end = time.time()
                 delta = section_end - section_start
-                print("Plotted Hop Distances for:", name, "over", str(np.round(delta/60.0, 2)), "minutes", flush=True)
+                logging.info("Plotted Hop Distances for: %s over %s minutes", name, np.round(delta/60.0, 2))
 
         # 2. Plot Real vs. Fake distance distributions
         #####################################################################################################
@@ -224,7 +231,8 @@ if __name__ == '__main__':
 
                 section_end = time.time()
                 delta = section_end - section_start
-                print("Plotted Real vs. Random Distances for:", name, "over", str(np.round(delta/60.0, 2)), "minutes", flush=True)
+                logging.info("Plotted Real vs. Random Distances for: %s over %s minutes", name, np.round(delta/60.0, 2))
+
 
         # 3 - Generate Income Prediction Results
         #######################################################################################################################
@@ -253,7 +261,7 @@ if __name__ == '__main__':
             
             section_end = time.time()
             delta = section_end - section_start
-            print("Generated Income Results for:", name, "over", str(np.round(delta/60.0, 2)), "minutes", flush=True)
+            logging.info("Generated Income Results for: %s over %s minutes", name, np.round(delta/60.0, 2))
         
         # 4 - Generate Job Change Prediction Results
         #######################################################################################################################
@@ -263,7 +271,7 @@ if __name__ == '__main__':
             
             section_end = time.time()
             delta = section_end - section_start
-            print("Generated Job Change Results for:", name, "over", str(np.round(delta/60.0, 2)), "minutes", flush=True)
+            logging.info("Generated Job Change Results for: %s over %s minutes", name, np.round(delta/60.0, 2))
         
         # 5.1 - Generate Marriage Pair Prediction Results
         ##################################################################################################################################################################################################
@@ -291,7 +299,7 @@ if __name__ == '__main__':
         
             section_end = time.time()
             delta = section_end - section_start
-            print("Generated Binary Marriage Results for:", name, "over", str(np.round(delta/60.0, 2)), "minutes", flush=True)
+            logging.info("Generated Binary Marriage Results for: %s over %s minutes", name, np.round(delta/60.0, 2))
             
         # 5.2 - Generate Marriage Partner Rank Prediction Results
         ##################################################################################################################################################################################################
@@ -304,7 +312,7 @@ if __name__ == '__main__':
             
             section_end = time.time()
             delta = section_end - section_start
-            print("Generated Marriage Rank Results for:", name, "over", str(np.round(delta/60.0, 2)), "minutes", flush=True)
+            logging.info("Generated Marriage Rank Results for: %s over %s minutes", name, np.round(delta/60.0, 2))
             
         # 6.1 - Generate Partnership Pair Predictions
         ##################################################################################################################################################################################################
@@ -331,8 +339,8 @@ if __name__ == '__main__':
         
             section_end = time.time()
             delta = section_end - section_start
-            print("Generated Binary Partnership Results for:", name, "over", str(np.round(delta/60.0, 2)), "minutes", flush=True)
-            
+            logging.info("Generated Binary Partnership Results for: %s over %s minutes", name, np.round(delta/60.0, 2))
+        
         # 6.2 - Generate Partnership Partner Rank Predictions
         ##################################################################################################################################################################################################
         if 6.2 in report_parts:
@@ -344,7 +352,7 @@ if __name__ == '__main__':
             
             section_end = time.time()
             delta = section_end - section_start
-            print("Generated Partnership Rank Results for:", name, "over", str(np.round(delta/60.0, 2)), "minutes", flush=True)
+            logging.info("Generated Partnership Rank Results for: %s over %s minutes", name, np.round(delta/60.0, 2))
 
         # 7 - Generate Highest Education Level Results
         ##########################################################################################################################################################################################
@@ -354,8 +362,7 @@ if __name__ == '__main__':
         
             section_end = time.time()
             delta = section_end - section_start
-            print("Generated Divorce Results for:", name, "over", str(np.round(delta/60.0, 2)), "minutes", flush=True)
-            
+            logging.info("Generated Divorce Results for: %s over %s minutes", name, np.round(delta/60.0, 2))
             
         # 8 - Generate Death Predictions
         ######################################################################################################################################################################################
@@ -368,8 +375,7 @@ if __name__ == '__main__':
         
             section_end = time.time()
             delta = section_end - section_start
-            print("Generated Death Results for:", name, "over", str(np.round(delta/60.0, 2)), "minutes", flush=True)
-
+            logging.info("Generated Death Results for: %s over %s minutes", name, np.round(delta/60.0, 2))
 
     ###########################################################################################################################################################################################
     # 4. Generate the report
@@ -449,7 +455,7 @@ if __name__ == '__main__':
 
     section_end = time.time()
     delta = section_end - section_start
-    print("Wrote summary in", str(delta), " seconds", flush=True)
+    logging.info("Wrote summary in %s seconds", delta)
     
     # Only print the table if we have 2 or more embeddings to compare  
     if len(embedding_sets) > 1 and 0 in report_parts:
@@ -479,7 +485,7 @@ if __name__ == '__main__':
             
         section_end = time.time()
         delta = section_end - section_start
-        print("Wrote section 0 in", str(np.round(delta, 2)), " seconds", flush=True)
+        logging.info("Wrote section 0 in %s seconds", np.round(delta, 2))
 
     #########################################################################################################################################
 
@@ -508,7 +514,7 @@ if __name__ == '__main__':
             
         section_end = time.time()
         delta = section_end - section_start
-        print("Wrote section 1 in", str(np.round(delta, 2)), " seconds", flush=True)
+        logging.info("Wrote section 1 in %s seconds", np.round(delta, 2))
             
     #########################################################################################################################################
 
@@ -538,7 +544,7 @@ if __name__ == '__main__':
             
         section_end = time.time()
         delta = section_end - section_start
-        print("Wrote section 2 in", str(np.round(delta, 2)), " seconds", flush=True)
+        logging.info("Wrote section 2 in %s seconds", np.round(delta, 2))
             
     ########################################################################################################################################
     
@@ -565,7 +571,7 @@ if __name__ == '__main__':
         
         section_end = time.time()
         delta = section_end - section_start
-        print("Wrote section 3 in", str(np.round(delta, 2)), " seconds", flush=True)
+        logging.info("Wrote section 3 in %s seconds", np.round(delta, 2))
         
     ###########################################################################################################################################################################
 
@@ -586,7 +592,7 @@ if __name__ == '__main__':
 
         section_end = time.time()
         delta = section_end - section_start
-        print("Wrote section 4 in", str(np.round(delta, 2)), " seconds", flush=True)
+        logging.info("Wrote section 4 in %s seconds", np.round(delta, 2))
 
     ##########################################################################################################################################
 
@@ -619,7 +625,7 @@ if __name__ == '__main__':
         
         section_end = time.time()
         delta = section_end - section_start
-        print("Wrote section 5.1 in", str(np.round(delta, 2)), " seconds", flush=True)            
+        logging.info("Wrote section 5.1 in %s seconds", np.round(delta, 2))
             
         #################################################################################################################
         
@@ -652,7 +658,7 @@ if __name__ == '__main__':
        
         section_end = time.time()
         delta = section_end - section_start
-        print("Wrote section 5.2 in", str(np.round(delta, 2)), " seconds", flush=True)
+        logging.info("Wrote section 5.2 in %s seconds", np.round(delta, 2))
         
         
     ######################################################################################################################
@@ -686,7 +692,7 @@ if __name__ == '__main__':
             
         section_end = time.time()
         delta = section_end - section_start
-        print("Wrote section 6.1 in", str(np.round(delta, 2)), " seconds", flush=True)
+        logging.info("Wrote section 6.1 in %s seconds", np.round(delta, 2))
             
     #################################################################################################################
         
@@ -719,7 +725,7 @@ if __name__ == '__main__':
        
         section_end = time.time()
         delta = section_end - section_start
-        print("Wrote section 6.2 in", str(np.round(delta, 2)), " seconds", flush=True)
+        logging.info("Wrote section 6.2 in %s seconds", np.round(delta, 2))
         
     ######################################################################################################################
 
@@ -736,7 +742,7 @@ if __name__ == '__main__':
         
         section_end = time.time()
         delta = section_end - section_start
-        print("Wrote section 7 in", str(np.round(delta, 2)), " seconds", flush=True)
+        logging.info("Wrote section 7 in %s seconds", np.round(delta, 2))
         
     ######################################################################################################################
     
@@ -755,7 +761,7 @@ if __name__ == '__main__':
         
         section_end = time.time()
         delta = section_end - section_start
-        print("Wrote section 8 in", str(np.round(delta, 2)), " seconds", flush=True)
+        logging.info("Wrote section 8 in %s seconds", np.round(delta, 2))
         
     ######################################################################################################################
 
@@ -763,4 +769,4 @@ if __name__ == '__main__':
 
     full_end = time.time()
     delta = full_end - full_start
-    print("Generated report over:", str(np.round(delta/60./60., 2)), "hours", flush=True)
+    logging.info("Generated report over: %s hours", np.round(delta/60./60., 2))

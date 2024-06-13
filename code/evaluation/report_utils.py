@@ -14,7 +14,17 @@ import h5py
 from nearest_neighbor import build_index, get_nearest_neighbor_e2e
 
 # Computes/Loads any values that are used to evaluate all embedding sets, such as income at age 30 or marriage
-def precompute_global(var_type):
+def precompute_global(var_type, years):
+    """
+    Load data necessary to evaluate all embedding sets.
+
+    Args:
+    years (list): Subset the data to years that are present both in the data in this list. 
+    var_type (str): Target variable, either of 'income', 'marriage', or 'death'.
+
+    Returns:
+    A single or a tuple of data objects, depending on the `var_type`. 
+    """
 
     # Get dict of income at age 30, organized by year and RINPERSOONNUM
     if var_type == 'income':
@@ -46,8 +56,11 @@ def precompute_global(var_type):
         
         seen_marriages = set()
         seen_partnerships = set()
+
+        marriage_years = [int(x) for x in list(marriage_data.keys())]
+        marriage_years = [str(x) for x in np.intersect1d(marriage_years, years)]
         
-        for year in marriage_data:
+        for year in marriage_years:
             marriage_data_by_year[int(year)] = {}
             partnership_data_by_year[int(year)] = {}
         
@@ -112,13 +125,12 @@ def precompute_global(var_type):
         with open("/gpfs/ostor/ossc9424/homedir/Life_Course_Evaluation/data/processed/death_years_by_person.pkl", 'rb') as pkl_file:
             death_years_by_person = dict(pickle.load(pkl_file))
             
-        years = [x for x in range(2010, 2022)]
         full_person_set = set(death_years_by_person.keys())
         
         deaths_by_year = {}
         death_count_by_year = {}
         
-        for year in years:
+        for year in np.intersect1d(years, list(deaths_by_year.values())):
             deaths_by_year[year] = {}
             death_count_by_year[year] = 0
             
@@ -707,8 +719,8 @@ def linear_variable_prediction(embedding_dict, variable_dict, years, dtype="sing
                 full_embedding_list.append(embedding)
                 full_label_list.append(label)
     
-    if len(full_embedding_list) < 5 or len(full_label_list) < 5:
-        print("Not enough samples! Aborting", flush=True)
+    if len(full_embedding_list) < 5 or len(full_label_list) < 5 or len(set(full_label_list)) < 2:
+        print("Not enough samples or classes! Aborting", flush=True)
         return None, None, None
         
     scores = cross_val_score(model, full_embedding_list, full_label_list, cv=5)

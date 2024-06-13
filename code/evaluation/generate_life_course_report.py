@@ -99,9 +99,9 @@ if __name__ == '__main__':
     
     full_start = time.time()
 
-    income_by_year = report_utils.precompute_global('income')
-    marriages_by_year, partnerships_by_year = report_utils.precompute_global('marriage')
-    deaths_by_year = report_utils.precompute_global('death')
+    income_by_year = report_utils.precompute_global('income', years)
+    marriages_by_year, partnerships_by_year = report_utils.precompute_global('marriage', years)
+    deaths_by_year = report_utils.precompute_global('death', years)
 
     distribution_savenames = []
     binary_savenames = []

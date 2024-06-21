@@ -197,7 +197,7 @@ def precompute_local(embedding_set, top_k=100, only_embedding=False):
             with h5py.File(emb_url, "r") as f:
                 sequence_id = f["sequence_id"][:]
                 embeddings = f[embedding_type][:, :]
-                embedding_dict = {int(key): emb.tolist() for key, emb in zip(sequence_id, embeddings)}
+                embedding_dict = {int(key): list(emb) for key, emb in zip(sequence_id, embeddings)}
                 embedding_lengths = [len(x) for x in embedding_dict.values()]
                 min_len, max_len = np.min(embedding_lengths), np.max(embedding_lengths)
                 assert min_len == max_len, "embedding lengths differ!"
@@ -673,15 +673,18 @@ def linear_variable_prediction(embedding_dict, variable_dict, years, dtype="sing
                 # If called with a baseline dict, append the values to the end of the embedding
                 if baseline is not None:
                     baseline_values = baseline[person]
-                    embedding += baseline_values
-                    
+                    extended_embedding = embedding + baseline_values   
+
                     baseline_by_year[year].append(baseline_values)
                     full_baseline_list.append(baseline_values)
-            
-                embeddings_by_year[year].append(embedding)
+
+                    embeddings_by_year[year].append(extended_embedding)
+                    full_embedding_list.append(extended_embedding)
+                else:
+                    embeddings_by_year[year].append(embedding)
+                    full_embedding_list.append(embedding)
+
                 labels_by_year[year].append(value)
-                
-                full_embedding_list.append(embedding)
                 full_label_list.append(value)
                 
         if dtype == 'pair':
@@ -707,14 +710,15 @@ def linear_variable_prediction(embedding_dict, variable_dict, years, dtype="sing
                     baseline_values_2 = baseline[partner]
                     assert len(baseline_values_1) == len(baseline_values_2)
                     
-                    embedding_1 += baseline_values_1
-                    embedding_2 += baseline_values_2
-                    assert len(embedding_1) == len(embedding_2)
+                    extended_embedding_1 = embedding_1 + baseline_values_1
+                    extended_embedding_2 = embedding_2 + baseline_values_2
+                    assert len(extended_embedding_1) == len(extended_embedding_2)
                     
                     baseline_by_year[year].append(baseline_values_1 + baseline_values_2)
                     full_baseline_list.append(baseline_values_1 + baseline_values_2)
-                
-                embedding = np.concatenate((embedding_1, embedding_2), axis=0)
+                    embedding = np.concatenate((extended_embedding_1, extended_embedding_2), axis=0)
+                else:                
+                    embedding = np.concatenate((embedding_1, embedding_2), axis=0)
                 
                 label = variable_dict[year][pair]
                 
@@ -1312,185 +1316,3 @@ def print_output_table(pdf, years, results, highlight=True, reverse=False):
    
 #########################################################################################################################################################
    
-def linear_baseline_prediction(embedding_dict, variable_dict, years, baseline, dtype="single"):
-
-    return_dict = {}
-    baseline_return_dict = {}
-
-    embeddings_by_year = {}
-    baseline_by_year = {}
-    labels_by_year = {}
-    test_counts_by_year = {}
-    
-    full_baseline_list = []
-    full_embedding_list = []
-    full_label_list = []
-
-    test_counts_overall = 0
-
-    model = LinearRegression()
-
-    for year in years:
-    
-        test_counts_by_year[year] = 0
-
-        if year not in embeddings_by_year:
-            embeddings_by_year[year] = []
-            labels_by_year[year] = []
-            baseline_by_year[year] = []
-        
-        if dtype == "single":
-            for person in variable_dict[year]:
-            # Get the players with a valid variable for this year
-                if person not in embedding_dict:
-                    continue
-                    
-                if person not in baseline:
-                    continue
-
-                embedding = embedding_dict[person]
-                value = variable_dict[year][person]
-            
-                baseline_values = baseline[person]
-                expanded_embedding = embedding + baseline_values
-                    
-                baseline_by_year[year].append(baseline[person])
-                full_baseline_list.append(baseline[person])
-            
-                embeddings_by_year[year].append(expanded_embedding)
-                labels_by_year[year].append(value)
-                
-                full_embedding_list.append(expanded_embedding)
-                full_label_list.append(value)
-                
-        if dtype == 'pair':
-
-            for pair in variable_dict[year]:
-                person = pair[0]
-                partner = pair[1]
-                
-                if person not in embedding_dict or partner not in embedding_dict:
-                    continue
-                    
-                if person not in baseline or partner not in baseline:
-                    continue
-                
-                embedding_1 = embedding_dict[person]
-                embedding_2 = embedding_dict[partner]
-                
-                baseline_values_1 = baseline[person]
-                baseline_values_2 = baseline[partner]
-                assert len(baseline_values_1) == len(baseline_values_2)
-                
-                extended_embedding_1 = embedding_1 + baseline_values_1
-                extended_embedding_2 = embedding_2 + baseline_values_2
-                assert len(extended_embedding_1) == len(extended_embedding_2)
-                
-                baseline_by_year[year].append(baseline_values_1 + baseline_values_2)
-                full_baseline_list.append(baseline_values_1 + baseline_values_2)
-                
-                combined_embedding = np.concatenate((extended_embedding_1, extended_embedding_2))
-                
-                label = variable_dict[year][pair]
-                
-                embeddings_by_year[year].append(combined_embedding)
-                labels_by_year[year].append(label)
-                
-                full_embedding_list.append(combined_embedding)
-                full_label_list.append(label)
-    
-    if len(full_embedding_list) < 5 or len(full_label_list) < 5:
-        print("Not enough samples! Aborting", flush=True)
-        return None, None, None
-        
-    scores = cross_val_score(model, full_embedding_list, full_label_list, cv=5)
-    overall_r2 = scores.mean()
-    return_dict['OVERALL'] = overall_r2
-    
-    baseline_model = LinearRegression()
-    scores = cross_val_score(baseline_model, full_baseline_list, full_label_list, cv=5)
-    baseline_overall = scores.mean()
-    baseline_return_dict['OVERALL'] = baseline_overall
-    
-    # Now do cross validation for each year
-    scores_by_year = {}
-    baseline_scores_by_year = {}
-    for year in years:
-        scores_by_year[year] = []
-        baseline_scores_by_year[year] = []
-    
-    for i in range(5):
-    
-        full_embedding_list = []
-        full_label_list = []
-        full_baseline_list = []
-        
-        test_embeddings_by_year = {}
-        test_labels_by_year = {}
-        test_baseline_by_year = {}
-        
-        for year in years:
-            embeddings = embeddings_by_year[year]
-            labels = labels_by_year[year]
-            baselines = baseline_by_year[year]
-            
-            combined = list(zip(embeddings, labels))
-            random.shuffle(combined)
-            embeddings, labels = zip(*combined)
-            
-            embeddings = list(embeddings)
-            labels = list(labels)
-            
-            split_point = int(len(embeddings) * 0.8)
-            
-            train_embeddings = embeddings[:split_point]
-            test_embeddings = embeddings[split_point:]
-            
-            train_labels = labels[:split_point]
-            test_labels = labels[split_point:]
-            
-            train_baseline = baselines[:split_point]
-            test_baseline = baselines[split_point:]
-            
-            full_embedding_list += train_embeddings
-            full_label_list += train_labels
-            full_baseline_list += train_baseline
-            
-            test_embeddings_by_year[year] = test_embeddings
-            test_labels_by_year[year] = test_labels
-            test_baseline_by_year[year] = test_baseline
-            
-            test_counts_by_year[year] = len(test_labels)
-            
-            # Get the test counts for the last fold
-            if i==4:
-                test_counts_overall += len(test_labels)
-            
-        model = LinearRegression()
-        model.fit(full_embedding_list, full_label_list)
-        
-        if baseline is not None:
-            baseline_model = LinearRegression()
-            baseline_model.fit(full_baseline_list, full_label_list)
-        
-        for year in years:
-            score = model.score(test_embeddings_by_year[year], test_labels_by_year[year])
-            scores_by_year[year].append(score)
-            
-            if baseline is not None:
-                score = baseline_model.score(test_baseline_by_year[year], test_labels_by_year[year])
-                baseline_scores_by_year[year].append(score)
-
-    for year in years:
-        r2 = np.mean(scores_by_year[year])
-        return_dict[year] = r2
-        
-        if baseline is not None:
-            r2 = np.mean(baseline_scores_by_year[year])
-            baseline_return_dict[year] = r2
-        
-    test_counts_by_year['OVERALL'] = test_counts_overall
-    
-    return return_dict, test_counts_by_year, baseline_return_dict
-
-########################################################################################################################

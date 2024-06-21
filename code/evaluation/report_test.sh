@@ -6,8 +6,8 @@
 #SBATCH --time=24:00:00
 #SBATCH --mem=0
 #SBATCH -p comp_env
-#SBATCH -e /gpfs/ostor/ossc9424/homedir/logs/report_test_stdout.txt
-#SBATCH -o /gpfs/ostor/ossc9424/homedir/logs/report_test_stdout.txt
+#SBATCH -e /gpfs/ostor/ossc9424/homedir/logs/%x.%j.err
+#SBATCH -o /gpfs/ostor/ossc9424/homedir/logs/%x.%j.err
 
 module purge 
 module load 2022 

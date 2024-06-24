@@ -198,6 +198,12 @@ def precompute_local(embedding_set, top_k=100, only_embedding=False):
                 sequence_id = f["sequence_id"][:]
                 embeddings = f[embedding_type][:, :]
                 embeddings = embeddings.astype(np.float32)
+
+                bad_embeddings = np.isinf(embeddings) | np.isnan(embeddings)
+                if np.any(bad_embeddings):
+                    logging.info("Replacing fraction %.3f of embeddings with 0" % np.mean(bad_embeddings))
+                    embeddings[np.where(bad_embeddings)] = 0
+
                 assert np.all(np.isfinite(embeddings)), "some embeddings are infinite"
                 assert not np.any(np.isnan(embeddings)), "some embeddings are NaN"
 

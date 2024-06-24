@@ -197,6 +197,9 @@ def precompute_local(embedding_set, top_k=100, only_embedding=False):
             with h5py.File(emb_url, "r") as f:
                 sequence_id = f["sequence_id"][:]
                 embeddings = f[embedding_type][:, :]
+                assert np.all(np.isfinite(embeddings)), "some embeddings are infinite"
+                assert not np.any(np.isnan(embeddings)), "some embeddings are NaN"
+                
                 embedding_dict = {int(key): list(emb) for key, emb in zip(sequence_id, embeddings)}
                 embedding_lengths = [len(x) for x in embedding_dict.values()]
                 min_len, max_len = np.min(embedding_lengths), np.max(embedding_lengths)

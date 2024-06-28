@@ -1,16 +1,27 @@
 import pandas as pd
-import pyreadstat
 import pickle
+import os 
+import re 
+
+source_dir = "/gpfs/ostor/ossc9424/homedir/cbs_data/real/InkomenBestedingen/INPATAB/"
+target_dir = "data/processed/"
 
 baseline_by_years = {}
-years = ['2011', '2012', '2013', '2014', '2015', '2016',
-         '2017', '2018', '2019', '2020', '2021', '2022']
-for year in years:
-    df = pd.read_spss("INPA" + year + "TABV2.sav",
-                      usecols=['RINPERSOON', 'INPBELI'])
-    # dtype={"RINPERSOON": int, "INPPERSPRIM": int})
+years = [str(x) for x in range(2011, 2023)]
 
-    # df = df.astype({"RINPERSOON": int, "INPPERSPRIM": int})
+inpa_files = os.listdir(source_dir)
+
+for f in inpa_files:
+    filename = os.path.join(source_dir, f)
+    df = pd.read_spss(filename,
+                      usecols=['RINPERSOON', 'INPBELI'])
+    
+    # make sure we record the year correctly and only have 1 file per year
+    year_matches = re.findall(r"\d{4}", f)
+    assert len(year_matches) == 1
+    year = year_matches[0]
+    years = [y for y in years if y != year]
+
     user_list = list(df['RINPERSOON'])
     income_list = list(df['INPBELI'])
 
@@ -30,5 +41,6 @@ for year in years:
 
     baseline_by_years[year] = yearly_baseline
 
-    with open("income_baseline_by_year.pkl", "wb") as pkl_file:
-        pickle.dump(baseline_by_years, pkl_file)
+
+with open(os.path.join(target_dir, "income_baseline_by_year.pkl"), "wb") as pkl_file:
+    pickle.dump(baseline_by_years, pkl_file)

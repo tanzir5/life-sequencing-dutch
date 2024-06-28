@@ -24,7 +24,7 @@ if __name__ == '__main__':
     # 7 = Prediction - Highest Education Level
     # 8 = Prediction - Death
 
-    income_baseline_year = ['2016']
+    income_baseline_year = '2016'
     report_parts = [1, 2, 3, 5.1, 6.1]
     regen_images = True
 

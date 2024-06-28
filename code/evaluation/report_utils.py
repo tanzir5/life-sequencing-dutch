@@ -281,9 +281,52 @@ def precompute_local(embedding_set, top_k=100, only_embedding=False):
     return embedding_dict, network_hops, ground_truth_dict, distance_matrix
 
 
+def load_hdf5(emb_url, id_key, value_key , sample_size=-1):
+    """Load and optionally sample data from an HDF5 file.
+
+    Args:
+        emb_url (str): The URL or path to the HDF5 file.
+        id_key (str): The key in the HDF5 file for the IDs dataset.
+        value_key (str): The key in the HDF5 file for the embeddings dataset.
+        sample_size (int, optional): The number of samples to load. If -1, load all data (default: -1).
+        Sampling uses a fixed seed. 
+
+    Returns:
+        tuple: A tuple containing:
+            - ids (numpy.ndarray): The array of IDs.
+            - embeddings (numpy.ndarray): The array of embeddings corresponding to the IDs.
+
+    Raises:
+        ValueError: If `sample_size` is invalid.
+    """
+    if sample_size < -1:
+        raise ValueError("sample_size must be -1 or a non-negative integer.")
+
+    if sample_size == -1:
+        with h5py.File(emb_url, "r") as f:
+            ids = f[id_key][:]
+            values = f[value_key][:, :]
+    else:
+        with h5py.File(emb_url, "r") as f:
+            nobs = f[id_key].shape[0]
+            sample_size = min(nobs, sample_size)
+            universe = np.arange(nobs)
+
+            rng = np.random.default_rng(seed=4)
+            draws = rng.choice(universe, size=sample_size, replace=False, shuffle=False)
+            draws = np.sort(draws)
+
+            ids = f[id_key][draws]
+            values = f[value_key][draws, :]
+
+    return ids, values
+
+
+
 def load_embeddings_from_hdf5(
         emb_url, 
         embedding_type, 
+        sample_size=-1,
         person_key="sequence_id", 
         replace_bad_values=True
         ):
@@ -295,8 +338,10 @@ def load_embeddings_from_hdf5(
     Args:
         emb_url (str): full url to the hdf5 file.
         embedding_type (str): name of one of the embedding types to retrieve. Must be a key in the hdf5f file.
-        person_key (str): unique person identifier. Must be a key in the hdf5 file.
-        replace_bad_values (bool): If true, replaces embeddings with NaNs and inifite values with 0.
+        sample_size (int, optional): The number of samples to load. If -1, load all data (default: -1).
+        Sampling uses a fixed seed.
+        person_key (str, optional): unique person identifier. Must be a key in the hdf5 file.
+        replace_bad_values (bool, optional): If true, replaces embeddings with NaNs and inifite embedding values with 0.
 
     Returns:
         dict: key-value pairs of person_key and embedding (where embedding is a list of floats)
@@ -305,10 +350,12 @@ def load_embeddings_from_hdf5(
         - AssertionError if any of the embeddings are either infinite or NaNs. Will never raise if `replace_bad_values`=`True`. 
         - AssertionError if the embedding lengths are not the same for all `person_key`s
     """
-    
-    with h5py.File(emb_url, "r") as f:
-        sequence_id = f[person_key][:]
-        embeddings = f[embedding_type][:, :]
+
+    person_keys, embeddings = load_hdf5(
+        emb_url=emb_url, 
+        id_key=person_key, 
+        value_key=embedding_type, 
+        sample_size=sample_size)
     
     embeddings = embeddings.astype(np.float32)
 
@@ -321,7 +368,7 @@ def load_embeddings_from_hdf5(
     assert np.all(np.isfinite(embeddings)), "some embeddings are infinite"
     assert not np.any(np.isnan(embeddings)), "some embeddings are NaN"
 
-    embedding_dict = {int(key): list(emb) for key, emb in zip(sequence_id, embeddings)}
+    embedding_dict = {int(key): list(emb) for key, emb in zip(person_keys, embeddings)}
     embedding_lengths = [len(x) for x in embedding_dict.values()]
     min_len, max_len = np.min(embedding_lengths), np.max(embedding_lengths)
     assert min_len == max_len, "embedding lengths differ!"

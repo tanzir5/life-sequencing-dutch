@@ -194,23 +194,8 @@ def precompute_local(embedding_set, top_k=100, only_embedding=False):
             embedding_dict = {int(key):value for key, value in embedding_dict.items()}
         else:
             embedding_type = embedding_set["emb_type"]
-            with h5py.File(emb_url, "r") as f:
-                sequence_id = f["sequence_id"][:]
-                embeddings = f[embedding_type][:, :]
-                embeddings = embeddings.astype(np.float32)
+            embedding_dict = load_embeddings_from_hdf5(emb_url, embedding_type)
 
-                bad_embeddings = np.isinf(embeddings) | np.isnan(embeddings)
-                if np.any(bad_embeddings):
-                    logging.info("Replacing fraction %.3f of embeddings with 0" % np.mean(bad_embeddings))
-                    embeddings[np.where(bad_embeddings)] = 0
-
-                assert np.all(np.isfinite(embeddings)), "some embeddings are infinite"
-                assert not np.any(np.isnan(embeddings)), "some embeddings are NaN"
-
-                embedding_dict = {int(key): list(emb) for key, emb in zip(sequence_id, embeddings)}
-                embedding_lengths = [len(x) for x in embedding_dict.values()]
-                min_len, max_len = np.min(embedding_lengths), np.max(embedding_lengths)
-                assert min_len == max_len, "embedding lengths differ!"
 
     #         for person in data_dict:
     #             relevant = data_dict[person]
@@ -294,6 +279,55 @@ def precompute_local(embedding_set, top_k=100, only_embedding=False):
     #             distance_matrix[other_id][person_id] = distance
 
     return embedding_dict, network_hops, ground_truth_dict, distance_matrix
+
+
+def load_embeddings_from_hdf5(
+        emb_url, 
+        embedding_type, 
+        person_key="sequence_id", 
+        replace_bad_values=True
+        ):
+    """Load embeddings from an hdf5 file that has the following key-values:
+        - "person_key": the unique person identifier
+        - "embedding type 0": name of embedding, for instance "cls_emb"
+        - "embedding type 1": name of alternative embeddings, ie "mean_emb"
+    
+    Args:
+        emb_url (str): full url to the hdf5 file.
+        embedding_type (str): name of one of the embedding types to retrieve. Must be a key in the hdf5f file.
+        person_key (str): unique person identifier. Must be a key in the hdf5 file.
+        replace_bad_values (bool): If true, replaces embeddings with NaNs and inifite values with 0.
+
+    Returns:
+        dict: key-value pairs of person_key and embedding (where embedding is a list of floats)
+
+    Raises:
+        - AssertionError if any of the embeddings are either infinite or NaNs. Will never raise if `replace_bad_values`=`True`. 
+        - AssertionError if the embedding lengths are not the same for all `person_key`s
+    """
+    
+    with h5py.File(emb_url, "r") as f:
+        sequence_id = f[person_key][:]
+        embeddings = f[embedding_type][:, :]
+    
+    embeddings = embeddings.astype(np.float32)
+
+    if replace_bad_values:
+        bad_embeddings = np.isinf(embeddings) | np.isnan(embeddings)
+        if np.any(bad_embeddings):
+            logging.info("Replacing fraction %.3f of embeddings with 0" % np.mean(bad_embeddings))
+            embeddings[np.where(bad_embeddings)] = 0
+
+    assert np.all(np.isfinite(embeddings)), "some embeddings are infinite"
+    assert not np.any(np.isnan(embeddings)), "some embeddings are NaN"
+
+    embedding_dict = {int(key): list(emb) for key, emb in zip(sequence_id, embeddings)}
+    embedding_lengths = [len(x) for x in embedding_dict.values()]
+    min_len, max_len = np.min(embedding_lengths), np.max(embedding_lengths)
+    assert min_len == max_len, "embedding lengths differ!"
+    
+    return embedding_dict
+
 
 ########################################################################################################################
 # Produces histograms for distance distributions, with cohorts defined by the shortest path distance within graph space

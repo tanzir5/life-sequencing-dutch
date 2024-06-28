@@ -24,6 +24,7 @@ if __name__ == '__main__':
     # 7 = Prediction - Highest Education Level
     # 8 = Prediction - Death
 
+    income_baseline_year = ['2016']
     report_parts = [1, 2, 3, 5.1, 6.1]
     regen_images = True
 
@@ -79,8 +80,9 @@ if __name__ == '__main__':
     baseline_dict = {}
 
     # 4. Income in 2011
-    with open("/gpfs/ostor/ossc9424/homedir/Life_Course_Evaluation/data/processed/2011_income_baseline.pkl", 'rb') as pkl_file:
-        person_income_2011 = dict(pickle.load(pkl_file))  
+    with open("/gpfs/ostor/ossc9424/homedir/Life_Course_Evaluation/data/processed/income_baseline_by_year.pkl", 'rb') as pkl_file:
+        income_baseline_by_year = dict(pickle.load(pkl_file))
+        income_baseline = income_baseline_year[income_baseline_year]
     
     for person in person_birth_year:
         birth_year = person_birth_year[person]
@@ -90,7 +92,7 @@ if __name__ == '__main__':
         baseline_dict[person] = [birth_year, gender, birth_city]
         
     income_baseline_dict = {}
-    for person in person_income_2011:
+    for person in income_baseline:
     
         if person not in person_birth_year:
             continue
@@ -103,7 +105,7 @@ if __name__ == '__main__':
         gender = person_gender[person]
         birth_city = person_birth_city[person]
             
-        income_baseline_dict[person] = [birth_year, gender, birth_city, person_income_2011[person]]
+        income_baseline_dict[person] = [birth_year, gender, birth_city, income_baseline[person]]
     
 
     # The years we will try to predict for

@@ -46,7 +46,7 @@ if __name__ == '__main__':
         "--sample",
         default=-1,
         type=int,
-        help="If positive, randomly sample as many persons for LLM embbeddings."
+        help="If positive, use embeddings of the first `sample` records in the hdf5 file."
     )
     
     args = parser.parse_args()

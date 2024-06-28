@@ -247,14 +247,15 @@ def draw_sample(input_list, size):
 
 
 def load_hdf5(emb_url, id_key, value_key , sample_size=-1):
-    """Load and optionally sample data from an HDF5 file.
+    """Load (a subset of) data from an HDF5 file.
 
     Args:
         emb_url (str): The URL or path to the HDF5 file.
         id_key (str): The key in the HDF5 file for the IDs dataset.
         value_key (str): The key in the HDF5 file for the embeddings dataset.
-        sample_size (int, optional): The number of samples to load. If -1, load all data (default: -1).
-        Sampling uses a fixed seed. 
+        sample_size (int, optional): The number of samples to load.
+          If -1 (the deafault), load all data. If non-negative, the records in the 
+          first indices until `sample_size` are read.
 
     Returns:
         tuple: A tuple containing:
@@ -276,13 +277,9 @@ def load_hdf5(emb_url, id_key, value_key , sample_size=-1):
             nobs = f[id_key].shape[0]
             sample_size = min(nobs, sample_size)
             universe = np.arange(nobs)
-
-            rng = np.random.default_rng(seed=4)
-            draws = rng.choice(universe, size=sample_size, replace=False, shuffle=False)
-            draws = np.sort(draws)
-
-            ids = f[id_key][draws]
-            values = f[value_key][draws, :]
+            
+            ids = f[id_key][:sample_size]
+            values = f[value_key][:sample_size, :]
 
     return ids, values
 
@@ -304,7 +301,6 @@ def load_embeddings_from_hdf5(
         emb_url (str): full url to the hdf5 file.
         embedding_type (str): name of one of the embedding types to retrieve. Must be a key in the hdf5f file.
         sample_size (int, optional): The number of samples to load. If -1, load all data (default: -1).
-        Sampling uses a fixed seed.
         person_key (str, optional): unique person identifier. Must be a key in the hdf5 file.
         replace_bad_values (bool, optional): If true, replaces embeddings with NaNs and inifite embedding values with 0.
 

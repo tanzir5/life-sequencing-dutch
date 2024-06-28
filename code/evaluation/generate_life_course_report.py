@@ -82,7 +82,7 @@ if __name__ == '__main__':
     # 4. Income in 2011
     with open("/gpfs/ostor/ossc9424/homedir/Life_Course_Evaluation/data/processed/income_baseline_by_year.pkl", 'rb') as pkl_file:
         income_baseline_by_year = dict(pickle.load(pkl_file))
-        income_baseline = income_baseline_year[income_baseline_year]
+        income_baseline = income_baseline_by_year[income_baseline_year]
     
     for person in person_birth_year:
         birth_year = person_birth_year[person]

@@ -150,7 +150,17 @@ def precompute_global(var_type, years):
 
 ########################################################################################################################
 # Computes/Loads any values that are used in multiple steps to evaluate a single embedding set, such as distance matrices
-def precompute_local(embedding_set, top_k=100, only_embedding=False):
+def precompute_local(embedding_set, only_embedding=False, sample_size=-1):
+    """Load and compute values that are used in multiple steps to evaluate a single embedding set, 
+    such as distance matrices.
+
+    Args:
+        embedding_set (dict): metadata for embedding files.
+        only_embedding (bool): If True, only embedding data are loaded.
+        sample_size (int, optional): If positive, only load a random sample of embeddings of as many people. 
+        Currently, changing this option only affects LLM embeddings that are stored as hdf5.
+        Defaults to -1, in which case all persons are loaded.    
+    """
     root = embedding_set['root']
     url = embedding_set['url']
     emb_type = embedding_set['type']
@@ -194,15 +204,14 @@ def precompute_local(embedding_set, top_k=100, only_embedding=False):
             embedding_dict = {int(key):value for key, value in embedding_dict.items()}
         else:
             embedding_type = embedding_set["emb_type"]
-            embedding_dict = load_embeddings_from_hdf5(emb_url, embedding_type)
+            embedding_dict = load_embeddings_from_hdf5(
+                emb_url=emb_url, 
+                embedding_type=embedding_type,
+                sample_size=sample_size,
+                person_key="sequence_id",
+                replace_bad_values=True
+                )
 
-
-    #         for person in data_dict:
-    #             relevant = data_dict[person]
-    #             key = subtype + "_emb"
-    #             emb = relevant[key]
-
-    #             embedding_dict[person] = emb
 
     if only_embedding:
         return embedding_dict
@@ -223,60 +232,9 @@ def precompute_local(embedding_set, top_k=100, only_embedding=False):
         ground_truth_dict = dict(pickle.load(pkl_file))
 
     ############################################################################################
-    # Step 4: Get person x person distance matrix in embedding space
+    # Step 4: Initialize distance matrix
 
     distance_matrix = {}
-    
-    #for person in embedding_dict:
-    #    distance_matrix[person] = {}
-
-    #nn_dict = get_nearest_neighbor_e2e(corpus_embs_dict=embedding_dict,
-    #                                   query_embs_dict=embedding_dict,
-    #                                   check_pids=None,
-    #                                   top_k=top_k,
-    #                                   ignore_self=True,
-    #                                   return_index=False)
-
-    #nn_data = nn_dict['result']
-
-    #for person in nn_data:
-    #    person_results = nn_data[person]
-    #    for result in person_results:
-    #        other = result['pid']
-    #        score = result['score']
-
-    #        distance_matrix[person][other] = score
-
-    #     embedding_array = []
-    #     id_to_index = {}
-
-    #     names = list(embedding_dict.keys())
-
-    #     for i, person in enumerate(names):
-
-    #         embedding = embedding_dict[person]
-    #         embedding_array.append(embedding)
-    #         id_to_index[person] = i
-
-    #     inverse_mapping = {}
-    #     for key, value in id_to_index.items():
-    #         inverse_mapping[value] = key
-
-    #     embedding_tensor = Tensor(np.array(embedding_array))
-    #     raw_distance_matrix = util.cos_sim(embedding_tensor, embedding_tensor).numpy()
-
-    #     for i in range(len(names)):
-
-    #         person_id = inverse_mapping[i]
-
-    #         for j in range(i, len(names)):
-
-    #             other_id = inverse_mapping[j]
-
-    #             distance = raw_distance_matrix[i][j].item()
-
-    #             distance_matrix[person_id][other_id] = distance
-    #             distance_matrix[other_id][person_id] = distance
 
     return embedding_dict, network_hops, ground_truth_dict, distance_matrix
 

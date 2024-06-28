@@ -41,6 +41,13 @@ if __name__ == '__main__':
         default='results/NL_test_1_',
         type=str,
     )
+
+    parser.add_argument(
+        "--sample",
+        default=-1,
+        type=int,
+        help="If positive, randomly sample as many persons for LLM embbeddings."
+    )
     
     args = parser.parse_args()
 
@@ -142,7 +149,8 @@ if __name__ == '__main__':
         
         section_start = time.time()
 
-        embedding_dict, hops_network, ground_truth_dict, distance_matrix = report_utils.precompute_local(emb, top_k=10)
+        embedding_dict, hops_network, ground_truth_dict, distance_matrix = report_utils.precompute_local(
+            emb, only_embedding=False, sample_size=args.sample)
         #embedding_dict = report_utils.precompute_local(emb, only_embedding=True)
         #distance_matrix = {}
 
@@ -175,7 +183,8 @@ if __name__ == '__main__':
         
             for j in range(i + 1, len(embedding_sets)):
                 emb_2 = embedding_sets[j]
-                embedding_dict_2 = report_utils.precompute_local(emb_2, only_embedding=True)
+                embedding_dict_2 = report_utils.precompute_local(
+                    emb_2, only_embedding=True, sample_size=args.sample)
                 name_2 = emb_2['name']
 
                 results_10 = report_utils.embedding_rank_comparison(embedding_dict, embedding_dict_2, top_k=10,

@@ -52,7 +52,7 @@ def test_single_variable(variable_dict, variable_name):
     keys = list(variable_dict.keys())
     for key in keys:
         variable = variable_dict[key]
-        assert type(key) == int, "Test Failed: variable dict <" + variable_name + "> is not indexed by integers - found type " + str(type(key))
+        assert isinstance(key, (int, np.integer)), "Test Failed: variable dict <" + variable_name + "> is not indexed by integers - found type " + str(type(key))
         assert variable is not None, "Test Failed: variable dict <" + variable_name + "> contains at least one None value"
         assert not np.isnan(variable), "Test Failed: variable dict <" + variable_name + "> contains at least one NaN value"
         assert type(variable) != tuple and type(variable) != list and type(variable) != np.ndarray, "Test Failed: variable dict <" + variable_name + "> contains a variable that is not a scalar - found type " + str(type(variable))
@@ -72,7 +72,7 @@ def test_years(years):
     # Ensure that years are represented as integers and that we have at least one year to test
     assert len(years) > 0, "Test Failed: Length of <years> is 0"
     for year in years:
-        assert type(year) == int, "Test Failed: at least one instance in <years> is not an integer - found type " + str(type(year))
+        assert isinstance(year, (int, np.integer)), "Test Failed: at least one instance in <years> is not an integer - found type " + str(type(year))
     # Ensure that we don't have any years past 2022
     max_year = max(years)
     assert max_year <= 2022, "Test Failed: highest value of <years> is " + str(max_year)
@@ -126,7 +126,8 @@ if __name__ == '__main__':
 
     # Load income
     print("Testing income variable...", flush=True)
-    income_by_year = report_utils.precompute_global('income')
+    years = range(2011, 2022)
+    income_by_year = report_utils.precompute_global('income', years)
     years = list(income_by_year.keys())
     test_years(years)
 
@@ -137,7 +138,7 @@ if __name__ == '__main__':
 
     # Load marriages
     print("Testing marriage variable...", flush=True)
-    marriages_by_year, partnerships_by_year = report_utils.precompute_global('marriage')
+    marriages_by_year, partnerships_by_year = report_utils.precompute_global('marriage', years)
     years = list(marriages_by_year.keys())
     test_years(years)
 

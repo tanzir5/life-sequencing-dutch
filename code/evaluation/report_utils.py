@@ -239,6 +239,13 @@ def precompute_local(embedding_set, only_embedding=False, sample_size=-1):
     return embedding_dict, network_hops, ground_truth_dict, distance_matrix
 
 
+def draw_sample(input_list, size):
+    size = min(len(input_list), size)
+    draws = random.sample(input_list, size)
+    return draws
+
+
+
 def load_hdf5(emb_url, id_key, value_key , sample_size=-1):
     """Load and optionally sample data from an HDF5 file.
 
@@ -352,7 +359,8 @@ def plot_embedding_distances(embedding_dict, hop_dict, distance_matrix, num_samp
         distances[i + 1] = []
         
     # Subsample the person list to only 100 thousand, no fucking way we can run all of these
-    person_list = random.sample(list(embedding_dict.keys()), 100000)
+    person_list = draw_sample(list(embedding_dict.keys()), 100000)
+    # person_list = random.sample(list(embedding_dict.keys()), 100000)
 
     for person in person_list:
 
@@ -527,7 +535,8 @@ def plot_distance_vs_ground_truth(embedding_dict, ground_truth, distance_matrix,
     fake_distances = []
     
     all_users = list(embedding_dict.keys())
-    reduced_users = random.sample(all_users, 100000)
+    reduced_users = draw_sample(all_users, 100000)
+    # reduced_users = random.sample(all_users, 100000)
 
     for person in reduced_users:
 

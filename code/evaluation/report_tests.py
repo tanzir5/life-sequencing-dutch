@@ -188,7 +188,7 @@ if __name__ == '__main__':
 
         for i, emb in enumerate(embedding_sets):
 
-            embedding_dict = report_utils.precompute_local(emb, only_embedding=True)
+            embedding_dict = report_utils.precompute_local(emb, only_embedding=True, sample_size=100)
             test_embeddings(embedding_dict, "LLM_" + str(i))
 
             embedding_keys = list(embedding_dict.keys())
